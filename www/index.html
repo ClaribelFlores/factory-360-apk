@@ -1,0 +1,3684 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FACTORY 360 | El corazón mecánico en tu pantalla</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,800;0,900;1,800;1,900&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* --- DESIGN TOKENS & RESET --- */
+    :root {
+      --bg-asfalto: #000000;
+      --bg-grafito: #000000;
+      --rojo-competicion: #E50914;
+      --blanco: #FFFFFF;
+      --gris-texto: #8E8E93;
+      --borde-sutil: #242429;
+      --negro-puro: #000000;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+    body {
+      background-color: var(--negro-puro);
+      color: var(--blanco);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+    }
+    img {
+      max-width: 100%;
+    }
+
+    /* --- PANTALLA INICIAL (SPLASH + INICIO.PNG + ENTRADA ALTERNADA) --- */
+    #splashScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 3000;
+      background-color: #000000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 2.2rem 1.4rem 2.6rem 1.4rem;
+      overflow: hidden;
+      transition: opacity 0.45s ease, visibility 0.45s ease;
+    }
+    #splashScreen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .splash-bg-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .splash-stage-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+    .splash-stage-img.is-logo {
+      object-fit: contain;
+      padding: 3rem;
+    }
+    .splash-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.22) 0%,
+        rgba(0, 0, 0, 0.45) 55%,
+        rgba(0, 0, 0, 0.86) 100%
+      );
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    #splashScreen.phase-login .splash-scrim {
+      opacity: 1;
+    }
+    .login-panel-bottom {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 390px;
+      display: none;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    #splashScreen.phase-login .login-panel-bottom {
+      display: flex;
+    }
+    .login-pill-input,
+    .login-pill-btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 999px;
+      border: 1.5px solid #FFFFFF;
+      background: transparent;
+      color: #FFFFFF;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      text-align: center;
+      outline: none;
+      padding: 0 1.2rem;
+      opacity: 0;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease, background 0.25s ease;
+    }
+    .login-pill-input::placeholder {
+      color: rgba(255, 255, 255, 0.85);
+    }
+    .from-right {
+      transform: translateX(115vw);
+    }
+    .from-left {
+      transform: translateX(-115vw);
+    }
+    .login-pill-input.entered,
+    .login-pill-btn.entered,
+    .login-forgot-wrap.entered {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .login-forgot-wrap {
+      display: flex;
+      justify-content: flex-end;
+      padding-right: 0.35rem;
+      opacity: 0;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease;
+    }
+    .login-forgot-link {
+      background: transparent;
+      border: none;
+      color: #FFFFFF;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .login-pill-btn {
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    .login-pill-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+    .login-error-msg {
+      min-height: 20px;
+      text-align: center;
+      color: #FF2A36;
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.95);
+    }
+    .login-demo-hint {
+      text-align: center;
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.35;
+    }
+
+    /* --- MODAL RECUPERAR CONTRASEÑA --- */
+    .recovery-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 3500;
+      background: rgba(0, 0, 0, 0.82);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.2rem;
+    }
+    .recovery-modal-backdrop.open {
+      display: flex;
+    }
+    .recovery-modal-card {
+      width: 100%;
+      max-width: 380px;
+      background: #111114;
+      border: 1px solid #3A3A42;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: left;
+    }
+    .recovery-modal-card h3 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 900;
+      margin-bottom: 0.5rem;
+      color: #FFFFFF;
+    }
+    .recovery-modal-card p {
+      font-size: 0.84rem;
+      color: #D1D1D6;
+      margin-bottom: 1rem;
+      line-height: 1.4;
+    }
+    .recovery-modal-actions {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: flex-end;
+      margin-top: 1rem;
+    }
+
+    /* --- PANEL DE ADMINISTRADOR EN VIVO --- */
+    .admin-live-bar {
+      display: none;
+      max-width: 1320px;
+      margin: 1.2rem auto 0 auto;
+      background: #101013;
+      border: 1px solid rgba(229, 9, 20, 0.55);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+    .admin-live-bar.visible {
+      display: block;
+    }
+    .admin-live-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+    .admin-live-header h3 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: var(--blanco);
+    }
+    .admin-live-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 0.7rem;
+      align-items: end;
+    }
+
+    /* --- 3. MÓDULO 1: HEADER STICKY --- */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 75px;
+      background-color: var(--negro-puro);
+      border-bottom: 2px solid var(--rojo-competicion);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+    .logo-img {
+      height: 44px;
+      width: auto;
+      max-width: 160px;
+      object-fit: contain;
+    }
+    .nav-menu {
+      display: flex;
+      list-style: none;
+      gap: 2rem;
+    }
+    .nav-link {
+      color: var(--gris-texto);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.3s ease;
+      padding-bottom: 4px;
+    }
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--blanco);
+      font-weight: 700;
+      border-bottom: 2px solid var(--rojo-competicion);
+    }
+    .header-tools {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+    }
+    .search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .search-input-box {
+      position: relative;
+      display: none;
+    }
+    .search-input-box.open {
+      display: inline-block;
+    }
+    .search-input-header {
+      display: block;
+      background-color: var(--negro-puro);
+      border: 1px solid #8E8E93;
+      border-radius: 4px;
+      padding: 6px 10px;
+      color: var(--blanco);
+      font-size: 0.85rem;
+      outline: none;
+      width: 210px;
+      transition: border-color 0.2s;
+    }
+    .search-input-header:focus {
+      border-color: #A1A1AA;
+    }
+    .search-suggestions {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      left: 0;
+      width: 100%;
+      background: #141417;
+      border: 1px solid #8E8E93;
+      border-radius: 6px;
+      padding: 6px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85);
+      z-index: 1200;
+      text-align: left;
+    }
+    .search-suggestions.show {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 5px;
+    }
+    .suggestions-section-label {
+      font-size: 0.64rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #A1A1AA;
+      padding: 2px 4px;
+      text-align: left;
+    }
+    .suggestion-item {
+      background: transparent;
+      border: none;
+      padding: 4px 6px;
+      border-radius: 4px;
+      color: var(--blanco);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: color 0.2s, background 0.2s;
+    }
+    .suggestion-item:hover {
+      color: var(--blanco);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .suggestions-similar-box {
+      background-color: #2b2b30;
+      border: 1px solid #52525b;
+      border-radius: 5px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .suggestions-similar-box .suggestions-section-label {
+      color: #d4d4d8;
+    }
+    .suggestions-similar-box .suggestion-item {
+      color: #e4e4e7;
+    }
+    .suggestions-similar-box .suggestion-item:hover {
+      background-color: #3f3f46;
+      color: #ffffff;
+    }
+    .tool-icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--gris-texto);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      border-radius: 6px;
+      transition: color 0.3s, background 0.3s;
+    }
+    .tool-icon-btn:hover,
+    .tool-icon-btn.active-mode {
+      color: var(--blanco);
+      background-color: rgba(255, 255, 255, 0.07);
+    }
+    .garage-btn {
+      position: relative;
+    }
+    .garage-count {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background-color: var(--rojo-competicion);
+      color: var(--blanco);
+      font-size: 0.65rem;
+      font-weight: bold;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .user-role-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .admin-pill {
+      background-color: rgba(229, 9, 20, 0.15);
+      border: 1px solid var(--rojo-competicion);
+      color: var(--blanco);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+    }
+
+    /* --- 2. PORTADA --- */
+    .hero-section {
+      position: relative;
+      width: 100%;
+      max-width: 100vw;
+      height: calc(100vh - 75px);
+      min-height: 520px;
+      background: #060608;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2.5rem 4rem;
+      overflow: hidden;
+    }
+    .hero-bg-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .hero-bg-img {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+    .hero-bg-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(6, 6, 8, 0.88) 0%,
+        rgba(8, 8, 11, 0.55) 55%,
+        rgba(8, 8, 11, 0.25) 100%
+      );
+      z-index: 1;
+    }
+    .hero-content {
+      position: relative;
+      max-width: 600px;
+      z-index: 3;
+    }
+    .hero-kicker {
+      color: var(--rojo-competicion);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+      display: block;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+    }
+    .hero-content h1 {
+      font-family: 'Montserrat', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+    .hero-content .title-top {
+      color: var(--rojo-competicion);
+      font-size: clamp(1.35rem, 2.5vw, 2rem);
+      font-weight: 900;
+      margin-bottom: 0.15rem;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+    }
+    .hero-content .title-speed {
+      color: var(--blanco);
+      font-size: clamp(2.4rem, 4.6vw, 3.9rem);
+      font-weight: 900;
+      font-style: italic;
+      transform: skew(-10deg);
+      display: inline-block;
+      line-height: 1.02;
+      margin-bottom: 1.1rem;
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.95);
+    }
+    .hero-content p {
+      font-size: 0.92rem;
+      color: #E4E4E7;
+      line-height: 1.5;
+      margin-bottom: 1.6rem;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+    }
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .btn-action-red {
+      background-color: var(--rojo-competicion);
+      color: var(--blanco);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .btn-action-red:hover {
+      background-color: #c50710;
+      transform: translateY(-2px);
+    }
+    .btn-action-dark {
+      background-color: rgba(12, 12, 15, 0.78);
+      color: var(--blanco);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-action-dark:hover {
+      border-color: var(--rojo-competicion);
+      transform: translateY(-2px);
+    }
+    .hero-indicators-group {
+      margin-top: 1.4rem;
+      margin-bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 2.2rem;
+      flex-wrap: wrap;
+    }
+    .indicator-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .indicator-item:hover {
+      opacity: 0.85;
+      transform: translateY(-2px);
+    }
+    .indicator-svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--rojo-competicion);
+      fill: none;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+    .indicator-text {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+    .indicator-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 900;
+      color: var(--blanco);
+      line-height: 1.1;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+    }
+    .indicator-desc {
+      font-size: 0.65rem;
+      color: #D1D1D6;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-top: 1px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+    }
+
+    /* --- 1. CATÁLOGO + CATEGORÍAS LADO A LADO --- */
+    .section-models {
+      width: 100%;
+      padding: 4.5rem 2rem;
+      background-color: var(--negro-puro);
+      border-top: none;
+      border-bottom: 1px solid var(--borde-sutil);
+    }
+    .catalog-split-layout {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.85fr) minmax(300px, 1fr);
+      gap: 1.5rem;
+      align-items: stretch;
+    }
+    .featured-panel {
+      background-color: var(--negro-puro);
+      border: 1px solid var(--borde-sutil);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .panel-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.4rem;
+      flex-wrap: wrap;
+    }
+    .speed-heading {
+      position: relative;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.45rem;
+      font-weight: 900;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--blanco);
+      padding-left: 14px;
+      display: inline-block;
+    }
+    .speed-heading::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 3px;
+      width: 10px;
+      height: 3px;
+      background-color: var(--rojo-competicion);
+      box-shadow: -3px 6px 0 var(--rojo-competicion), 2px 12px 0 var(--rojo-competicion);
+    }
+    .panel-controls-right {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    .currency-toggle {
+      display: inline-flex;
+      background-color: var(--negro-puro);
+      border: 1px solid var(--borde-sutil);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .currency-btn {
+      background: transparent;
+      border: none;
+      color: var(--gris-texto);
+      padding: 4px 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.68rem;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .currency-btn.active {
+      background-color: var(--rojo-competicion);
+      color: var(--blanco);
+    }
+    .view-all-link.red {
+      color: var(--rojo-competicion);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      text-decoration: none;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      transition: color 0.2s;
+    }
+    .view-all-link.red:hover {
+      color: var(--blanco);
+    }
+    .models-carousel-stage {
+      position: relative;
+      width: 100%;
+    }
+    .side-arrow-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: var(--gris-texto);
+      width: 24px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      cursor: pointer;
+      z-index: 6;
+      user-select: none;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .side-arrow-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .side-arrow-btn:hover {
+      color: var(--blanco);
+      transform: translateY(-50%) scale(1.1);
+    }
+    .side-arrow-prev {
+      left: -24px;
+    }
+    .side-arrow-next {
+      right: -24px;
+    }
+    .models-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    .moto-card {
+      position: relative;
+      min-height: 350px;
+      background-color: var(--negro-puro);
+      border: 1px solid var(--borde-sutil);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+    .moto-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--rojo-competicion);
+    }
+    .moto-full-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      z-index: 0;
+      display: block;
+    }
+    .moto-card-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.14) 0%,
+        rgba(0, 0, 0, 0.34) 44%,
+        rgba(0, 0, 0, 0.88) 76%,
+        rgba(0, 0, 0, 0.98) 100%
+      );
+      z-index: 1;
+      pointer-events: none;
+    }
+    .moto-top-overlay {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      padding: 10px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .segment-badge {
+      background-color: var(--rojo-competicion);
+      color: var(--blanco);
+      padding: 4px 12px 4px 10px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      clip-path: polygon(0 0, 100% 0, 88% 100%, 0% 100%);
+    }
+    .fav-card-btn {
+      background: transparent;
+      border: none;
+      color: var(--rojo-competicion);
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .fav-card-btn:hover {
+      transform: scale(1.15);
+    }
+    .fav-card-btn svg {
+      fill: var(--rojo-competicion);
+      stroke: var(--rojo-competicion);
+    }
+    .fav-card-btn:not(.saved) svg {
+      fill: rgba(229, 9, 20, 0.25);
+    }
+    .moto-body {
+      position: relative;
+      z-index: 2;
+      padding: 0.9rem 1.15rem 1.2rem 1.15rem;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .moto-brand-tag {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--gris-texto);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 2px;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+    }
+    .moto-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.08rem;
+      font-weight: 900;
+      color: var(--blanco);
+      margin-bottom: 0.6rem;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+    }
+    .moto-price-block {
+      position: relative;
+      display: flex;
+      justify-content: flex-end;
+      align-items: baseline;
+      padding-bottom: 0.6rem;
+      margin-bottom: 0.8rem;
+    }
+    .moto-price-block::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 1cm;
+      height: 2px;
+      background-color: var(--rojo-competicion);
+    }
+    .price-main {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.98rem;
+      font-weight: 400;
+      color: var(--rojo-competicion);
+      text-align: right;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+    }
+    .moto-specs-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      text-align: left;
+    }
+    .spec-col-val {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--blanco);
+      line-height: 1.25;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+    }
+    .spec-col-lbl {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--gris-texto);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+    .categories-panel {
+      background-color: var(--negro-puro);
+      border: 1px solid var(--borde-sutil);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.85rem;
+      margin-top: 0.4rem;
+      flex: 1;
+    }
+    .category-tile {
+      position: relative;
+      background-color: var(--negro-puro);
+      border: 1px solid var(--borde-sutil);
+      border-radius: 8px;
+      padding: 1.1rem 0.7rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.22s ease;
+    }
+    .category-tile:hover,
+    .category-tile.active {
+      border-color: var(--rojo-competicion);
+      transform: translateY(-2px);
+    }
+    .category-icon-img {
+      width: 52px;
+      height: 32px;
+      max-width: 100%;
+      object-fit: contain;
+      position: relative;
+      z-index: 1;
+      transition: transform 0.2s, filter 0.2s;
+    }
+    .category-tile:hover .category-icon-img,
+    .category-tile.active .category-icon-img {
+      transform: scale(1.07);
+      filter: brightness(1.15);
+    }
+    .category-label {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--blanco);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* --- 5. SECCIÓN INGENIERÍA (ADAPTACIÓN HORIZONTAL EN CELULAR) --- */
+    .section-engineering {
+      padding: 4.5rem 2rem;
+      background-color: var(--negro-puro);
+    }
+    .engineering-container {
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+    .engineering-top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.4rem;
+    }
+    .engineering-main-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 2.1rem;
+      font-weight: 900;
+      font-style: italic;
+      text-transform: uppercase;
+      color: var(--blanco);
+      letter-spacing: 0.5px;
+    }
+    .btn-back-catalog {
+      background-color: var(--negro-puro);
+      border: 1px solid var(--borde-sutil);
+      color: var(--blanco);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-back-catalog:hover {
+      border-color: var(--rojo-competicion);
+    }
+    .engineering-horizontal-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(225px, 0.65fr) minmax(420px, 1.85fr);
+      background-color: var(--negro-puro);
+      border: 1px solid var(--borde-sutil);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 22px 45px rgba(0, 0, 0, 0.85);
+    }
+    .engineering-horizontal-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 140px;
+      height: 3px;
+      background-color: var(--rojo-competicion);
+      z-index: 4;
+    }
+    .eng-badges-column {
+      padding: 1.1rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.68rem;
+      z-index: 2;
+      background-color: var(--negro-puro);
+    }
+    .eng-pillar-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 0.34rem 0.45rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .eng-pillar-btn:hover,
+    .eng-pillar-btn.active {
+      background-color: rgba(229, 9, 20, 0.08);
+      border-color: rgba(229, 9, 20, 0.45);
+    }
+    .eng-outline-icon-box {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .eng-outline-icon-box svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: var(--rojo-competicion);
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .eng-pillar-text h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--blanco);
+      margin-bottom: 1px;
+      line-height: 1.2;
+    }
+    .eng-pillar-text p {
+      font-size: 0.71rem;
+      line-height: 1.3;
+      color: var(--gris-texto);
+    }
+    .eng-showcase-right {
+      position: relative;
+      min-height: 410px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 2rem 2.4rem;
+      overflow: hidden;
+      background-color: var(--negro-puro);
+    }
+    .eng-moto-bg-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      z-index: 0;
+    }
+    .eng-showcase-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.22) 45%, rgba(0, 0, 0, 0.82) 100%);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .eng-showcase-content {
+      position: relative;
+      z-index: 2;
+      max-width: 640px;
+      width: 100%;
+      margin-left: 0;
+      text-align: left;
+    }
+    .eng-model-thin-label {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      font-style: normal;
+      color: var(--blanco);
+      margin-bottom: 0.35rem;
+      letter-spacing: 0.4px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+    }
+    .eng-catchphrase {
+      font-family: 'Montserrat', sans-serif;
+      font-size: clamp(1.35rem, 2.3vw, 1.95rem);
+      font-weight: 900;
+      font-style: italic;
+      text-transform: uppercase;
+      line-height: 1.12;
+      color: var(--blanco);
+      margin-bottom: 0.65rem;
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.9);
+    }
+    .eng-model-summary {
+      font-size: 0.86rem;
+      color: #D1D1D6;
+      line-height: 1.45;
+      margin-bottom: 1.25rem;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+    }
+    .eng-cta-row {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+    .btn-visor-360-box {
+      background-color: var(--rojo-competicion);
+      color: var(--blanco);
+      border: none;
+      border-radius: 6px;
+      padding: 10px 18px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .btn-visor-360-box:hover {
+      background-color: #c50710;
+      transform: translateY(-2px);
+    }
+    .fav-hero-eng-banner {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 75px);
+      min-height: 460px;
+      border: 1px solid var(--borde-sutil);
+      border-radius: 14px;
+      overflow: hidden;
+      background-color: var(--negro-puro);
+      display: flex;
+      align-items: flex-end;
+      padding: 2rem 2.4rem;
+    }
+    .fav-hero-eng-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      z-index: 0;
+    }
+    .fav-hero-eng-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.55) 55%, rgba(0, 0, 0, 0.92) 100%);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .fav-hero-eng-content {
+      position: relative;
+      z-index: 2;
+      max-width: 720px;
+      text-align: left;
+    }
+    .fav-expanded-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+      margin-top: 1.6rem;
+    }
+    .fav-section-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .fav-section-title-outside {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 900;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--blanco);
+      padding-left: 4px;
+    }
+    .selected-pillar-panel {
+      display: none;
+      position: relative;
+      height: calc(100vh - 75px);
+      margin-top: 1.4rem;
+      background-color: var(--negro-puro);
+      border: 1px solid var(--borde-sutil);
+      border-radius: 14px;
+      padding: 0;
+      overflow: hidden;
+      flex-direction: row;
+      justify-content: flex-end;
+      align-items: stretch;
+    }
+    .selected-pillar-panel.open {
+      display: flex;
+    }
+    .selected-pillar-panel.stacked-open {
+      display: flex;
+      margin-top: 0;
+    }
+    .pillar-bg-photo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      z-index: 0;
+      transition: opacity 0.25s ease;
+    }
+    .pillar-full-height-gray-band {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      width: calc(440px + 1cm + 2.4rem);
+      max-width: calc(100% - 2rem);
+      margin-left: auto;
+      padding: 2rem 2.4rem 2rem calc(1.2rem + 1cm);
+      background-color: rgba(34, 34, 38, 0.84);
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: left;
+    }
+    .pillar-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .pillar-red-tag {
+      background-color: var(--rojo-competicion);
+      color: var(--blanco);
+      padding: 6px 16px;
+      transform: skewX(-18deg);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pillar-red-tag span {
+      display: inline-block;
+      transform: skewX(18deg);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 500;
+      font-style: normal;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+    }
+    .pillar-close-btn {
+      background: var(--negro-puro);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: var(--blanco);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .pillar-close-btn:hover {
+      border-color: var(--rojo-competicion);
+      background: rgba(229, 9, 20, 0.25);
+    }
+    .pillar-right-bottom-info {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      width: 100%;
+      margin-top: auto;
+      text-align: left;
+    }
+    .pillar-nav-text-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+    }
+    .pillar-text-content {
+      flex: 1;
+      text-align: left;
+    }
+    .pillar-thin-arrow {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: var(--blanco);
+      padding: 2px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .pillar-thin-arrow:hover {
+      color: var(--rojo-competicion);
+      transform: scale(1.12);
+    }
+    .pillar-thin-arrow svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .pillar-wide-italic-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: clamp(1.05rem, 1.8vw, 1.45rem);
+      font-weight: 900;
+      font-style: italic;
+      font-stretch: expanded;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      line-height: 1.15;
+      color: var(--blanco);
+      margin-bottom: 0.5rem;
+      text-align: left;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
+    }
+    .pillar-transparent-copy {
+      background: transparent;
+      border: none;
+      color: #F2F2F7;
+      font-size: 0.75rem;
+      line-height: 1.45;
+      margin-bottom: 0;
+      text-align: left;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
+    }
+    .viewer-container {
+      display: none;
+      width: 100%;
+      margin-top: 1.4rem;
+      background-color: #000000;
+      border: 1px solid var(--borde-sutil);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .viewer-container.open {
+      display: block;
+    }
+    .viewer-container.top-priority {
+      margin-top: 1.4rem;
+    }
+    .viewer-container h3 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .visor-360-iframe-box {
+      width: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--borde-sutil);
+      background-color: #000000;
+    }
+    .visor-360-iframe {
+      width: 100%;
+      height: 520px;
+      border: none;
+      display: block;
+      background-color: #000000;
+    }
+
+    /* --- 6. MÓDULO DE CONTACTO --- */
+    .section-contact {
+      padding: 5rem 2rem;
+      background-color: var(--negro-puro);
+      border-top: 1px solid var(--borde-sutil);
+    }
+    .contact-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    #contacto-landing {
+      text-align: center;
+    }
+    #contacto-landing h2 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      margin-bottom: 2rem;
+    }
+    .direct-channels {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .channel-card {
+      background-color: var(--negro-puro);
+      border: 1px solid var(--borde-sutil);
+      padding: 1.5rem;
+      border-radius: 8px;
+    }
+    .channel-card h4 {
+      color: var(--gris-texto);
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+    .channel-card p {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .channel-action-link {
+      display: inline-block;
+      margin-top: 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--rojo-competicion);
+      text-decoration: none;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .channel-action-link:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+    .channel-sub-row {
+      display: flex;
+      gap: 0.7rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 0.55rem;
+    }
+    .btn-primary {
+      background-color: var(--rojo-competicion);
+      color: var(--blanco);
+      border: none;
+      padding: 12px 30px;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.3s;
+    }
+    .btn-primary:hover {
+      background-color: #c50710;
+    }
+    #contacto-form-view {
+      display: none;
+      background-color: var(--negro-puro);
+      border: 1px solid var(--borde-sutil);
+      padding: 2.5rem;
+      border-radius: 8px;
+    }
+    #contacto-form-view h3 {
+      font-family: 'Montserrat', sans-serif;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      font-weight: 900;
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--gris-texto);
+      margin-bottom: 0.4rem;
+    }
+    .form-control {
+      width: 100%;
+      background-color: var(--negro-puro);
+      border: 1px solid var(--borde-sutil);
+      padding: 10px 14px;
+      border-radius: 4px;
+      color: var(--blanco);
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .form-control:focus {
+      border-color: var(--rojo-competicion);
+    }
+    .form-feedback-error {
+      color: #FF2A36;
+      font-size: 0.88rem;
+      font-weight: 700;
+      margin-top: 0.6rem;
+      min-height: 20px;
+      text-align: left;
+    }
+    .form-feedback-ok {
+      color: #4ADE80;
+      font-size: 0.88rem;
+      font-weight: 700;
+      margin-top: 0.6rem;
+      text-align: left;
+    }
+    .consultas-historial-box {
+      display: none;
+      margin-top: 2rem;
+      background: #09090b;
+      border: 1px solid var(--borde-sutil);
+      border-radius: 8px;
+      padding: 1.2rem;
+      text-align: left;
+    }
+    .consultas-historial-box.visible {
+      display: block;
+    }
+    .consultas-historial-box h4 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 800;
+      margin-bottom: 0.8rem;
+      text-transform: uppercase;
+    }
+    .consulta-item-card {
+      border-top: 1px solid var(--borde-sutil);
+      padding: 0.7rem 0;
+      font-size: 0.84rem;
+      color: #E4E4E7;
+    }
+    .form-footer-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .btn-back-channels {
+      background: transparent;
+      border: none;
+      color: var(--gris-texto);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 0;
+      transition: color 0.2s;
+    }
+    .btn-back-channels:hover {
+      color: var(--blanco);
+      text-decoration: underline;
+    }
+
+    @media (max-width: 1100px) {
+      .catalog-split-layout {
+        grid-template-columns: 1fr;
+      }
+      .models-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .engineering-horizontal-card {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 900px) {
+      .hero-section {
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: flex-start;
+        padding-top: 9rem;
+        padding-right: 1.25rem;
+        padding-bottom: 2rem;
+        padding-left: 1.25rem;
+        text-align: left;
+        width: 100%;
+        min-height: 100dvh;
+      }
+      .hero-bg-img {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+      .hero-bg-scrim {
+        background: linear-gradient(
+          180deg,
+          rgba(6, 6, 8, 0.72) 0%,
+          rgba(12, 12, 16, 0.82) 100%
+        );
+      }
+      .hero-buttons, .hero-indicators-group {
+        justify-content: center;
+      }
+      .hero-indicators-group {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .indicator-item {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      text-align: left !important;
+      flex: 1 1 0 !important;
+      min-width: 0 !important;
+      gap: 4px !important;
+    }
+
+    .indicator-text {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      min-width: 0 !important;
+    }
+
+    .indicator-svg {
+      width: 11px !important;
+      height: 11px !important;
+      flex-shrink: 0 !important; 
+    }
+
+    .indicator-title {
+      font-size: 0.58rem !important;
+      line-height: 1.1 !important;
+    }
+
+    .indicator-desc {
+      font-size: 0.5rem !important;
+      line-height: 1.1 !important;
+    }
+
+    .hero-section h1,
+    .hero-title {
+      font-size: 1.3rem !important;
+      line-height: 1.1 !important;
+    }
+
+    .hero-section h2,
+    .hero-subtitle {
+      font-size: 1.6rem !important;
+      line-height: 1.08 !important; 
+    }
+
+    .hero-eyebrow,
+    .hero-kicker,
+    .hero-badge,
+    .hero-subtitle-top {
+      display: none;
+    }
+
+    .hero-section p,
+    .hero-desc {
+      font-size: 0.65rem !important;
+      line-height: 1.25 !important;
+    }
+
+    .hero-buttons a,
+    .hero-buttons button,
+    .btn-primary,
+    .btn-secondary {
+      padding: 0.32rem 0.58rem !important;
+      font-size: 0.62rem !important;
+    }
+
+    .indicator-svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+
+    .indicator-title {
+      font-size: 0.65rem;
+      line-height: 1.1;
+    }
+
+    .indicator-desc {
+      font-size: 0.56rem;
+      line-height: 1.1;
+    }
+    .indicator-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      flex: 1 1 0;
+      min-width: 0;
+      gap: 3px;
+    }
+
+    .indicator-svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .indicator-title {
+      font-size: 0.72rem;
+      line-height: 1.1;
+    }
+
+    .indicator-desc {
+      font-size: 0.62rem;
+      line-height: 1.1;
+    }
+      .side-arrow-prev {
+        left: -20px;
+      }
+      .side-arrow-next {
+        right: -20px;
+      }
+      .models-grid {
+        grid-template-columns: 1fr;
+      }
+      .eng-showcase-right {
+        min-height: 250px;
+        padding: 1.25rem;
+      }
+      .eng-moto-bg-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background-color: #050507;
+      }
+      .fav-hero-eng-banner {
+        height: auto;
+        min-height: 260px;
+        padding: 1.25rem;
+      }
+      .fav-hero-eng-img {
+        object-fit: contain;
+        background-color: #050507;
+      }
+      .selected-pillar-panel {
+        height: auto;
+        min-height: 360px;
+        flex-direction: column;
+      }
+      .pillar-bg-photo {
+        position: relative;
+        width: 100%;
+        height: 210px;
+        object-fit: contain;
+        background-color: #050507;
+      }
+      .pillar-full-height-gray-band {
+        width: 100%;
+        max-width: 100%;
+        min-height: auto;
+        height: auto;
+        padding: 1.2rem;
+      }
+      .visor-360-iframe {
+        height: 360px;
+      }
+      .nav-menu {
+        display: none;
+      }
+      .direct-channels {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- PANTALLA INICIAL (SPLASH LOGO.PNG -> INICIO.PNG + 1 SEG -> CONTROLES ALTERNADOS) -->
+  <div id="splashScreen" aria-label="Pantalla inicial FACTORY 360">
+    <div class="splash-bg-layer">
+      <img id="splashStageImg" src="logo.png" alt="Logo FACTORY 360" class="splash-stage-img is-logo"
+        onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='img/logo.png';}">
+    </div>
+    <div class="splash-scrim"></div>
+
+    <form id="loginForm" class="login-panel-bottom" novalidate>
+      <input type="text" id="loginUserInput" class="login-pill-input from-right" placeholder="Usuario" autocomplete="username">
+      <input type="password" id="loginPassInput" class="login-pill-input from-left" placeholder="Contraseña" autocomplete="current-password">
+      <div class="login-forgot-wrap from-right" id="loginForgotWrap">
+        <button type="button" id="btnForgotPassword" class="login-forgot-link">Olvidé mi contraseña</button>
+      </div>
+      <button type="submit" id="btnSubmitLogin" class="login-pill-btn from-left">Iniciar sesión</button>
+      <div id="loginErrorMsg" class="login-error-msg"></div>
+      <div class="login-demo-hint">
+        Demo: <strong>usuario</strong> / <strong>1234</strong> (Usuario) · <strong>admin</strong> / <strong>admin123</strong> (Admin)
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL SIMPLE DE RECUPERACIÓN DE CONTRASEÑA -->
+  <div id="recoveryModal" class="recovery-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="recoveryTitle">
+    <div class="recovery-modal-card">
+      <h3 id="recoveryTitle">Recuperar contraseña</h3>
+      <p>Ingresá tu usuario o correo registrado para generar un aviso de restablecimiento en FACTORY 360.</p>
+      <input type="text" id="recoveryInput" class="form-control" placeholder="Ej: usuario@factory360.com o admin">
+      <div id="recoveryFeedback" class="form-feedback-error"></div>
+      <div class="recovery-modal-actions">
+        <button type="button" id="btnCloseRecovery" class="btn-back-channels">Volver al ingreso</button>
+        <button type="button" id="btnConfirmRecovery" class="btn-primary">Enviar aviso</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. MÓDULO 1: HEADER STICKY -->
+  <header>
+    <a href="#portada" class="logo-container" aria-label="Inicio">
+      <img src="logo.png" alt="Logo FACTORY 360" class="logo-img" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='img/logo.png';}else{this.style.display='none';}">
+    </a>
+    <ul class="nav-menu">
+      <li><a href="#portada" class="nav-link active">PORTADA</a></li>
+      <li><a href="#modelos" class="nav-link">MODELOS</a></li>
+      <li><a href="#ingenieria" class="nav-link">INGENIERÍA</a></li>
+      <li><a href="#contacto" class="nav-link">CONTACTO</a></li>
+    </ul>
+    <div class="header-tools">
+      <div class="search-wrapper" id="searchWrapper">
+        <div class="search-input-box" id="searchInputBox">
+          <input type="text" id="searchInput" class="search-input-header" placeholder="Escribir modelo o categoría..." autocomplete="off">
+          <div class="search-suggestions" id="searchSuggestions"></div>
+        </div>
+        <button class="tool-icon-btn" id="btnToggleSearch" title="Buscar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+      </div>
+      <button class="tool-icon-btn garage-btn" id="btnGarageHeader" title="Ver modelos guardados en favoritos">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        <span class="garage-count" id="garageCount">0</span>
+      </button>
+      <div class="user-role-container">
+        <button type="button" id="btnOpenLoginScreen" class="tool-icon-btn" title="Cambiar sesión o usuario">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </button>
+        <button type="button" id="roleBadgeBtn" class="admin-pill" title="Rol activo (tocá para cambiar sesión)">ADMIN</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. PORTADA / HERO SECTION -->
+  <section id="portada" class="hero-section">
+    <div class="hero-bg-layer">
+      <img src="portada.png" alt="Portada FACTORY 360" class="hero-bg-img" onerror="if(!this.dataset.fb1){this.dataset.fb1='1';this.src='img/portada.png';}else if(!this.dataset.fb2){this.dataset.fb2='1';this.src='modelotwister.png';}">
+    </div>
+    <div class="hero-bg-scrim"></div>
+    <div class="hero-content">
+      <span class="hero-kicker">POWER · CONTROL · FREEDOM</span>
+      <h1 class="title-top">POTENCIA EN TU PANTALLA</h1>
+      <h1 class="title-speed">TWISTER 300</h1>
+      <p>El corazón mecánico en tu pantalla. Explorá, cotizá y sentí la ruta con la nueva unidad insignia.</p>
+      <div class="hero-buttons">
+        <a href="#modelos" class="btn-action-red">Explorar Motos</a>
+        <a href="#ingenieria" class="btn-action-dark">Ver Colección</a>
+      </div>
+      <div class="hero-indicators-group">
+        <button type="button" class="indicator-item" onclick="abrirVisor360Modelo(1)">
+          <svg class="indicator-svg" viewBox="0 0 24 24">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+            <path d="M16 16h5v5"/>
+          </svg>
+          <div class="indicator-text">
+            <span class="indicator-title">360°</span>
+            <span class="indicator-desc">Planta Motriz</span>
+          </div>
+        </button>
+        <a href="#contacto" class="indicator-item">
+          <svg class="indicator-svg" viewBox="0 0 24 24">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <div class="indicator-text">
+            <span class="indicator-title">Fábrica</span>
+            <span class="indicator-desc">Red Oficial</span>
+          </div>
+        </a>
+        <a href="#modelos" class="indicator-item">
+          <svg class="indicator-svg" viewBox="0 0 24 24">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          <div class="indicator-text">
+            <span class="indicator-title">ARS / USD</span>
+            <span class="indicator-desc">Cotización Dual</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1. CATÁLOGO OFICIAL + CATEGORÍAS -->
+  <section id="modelos" class="section-models">
+    <div class="catalog-split-layout">
+      <!-- PANEL IZQUIERDO: MODELOS SELECCIONADOS / FAVORITOS -->
+      <div class="featured-panel">
+        <div class="panel-top-bar">
+          <h2 class="speed-heading" id="modelsPanelHeading">MODELOS</h2>
+          <div class="panel-controls-right">
+            <div class="currency-toggle">
+              <button class="currency-btn active" id="btnARS">ARS</button>
+              <button class="currency-btn" id="btnUSD">USD</button>
+            </div>
+          </div>
+        </div>
+        <div class="models-carousel-stage">
+          <button type="button" class="side-arrow-btn side-arrow-prev" id="btnPrevMoto" title="Anterior">
+            <svg viewBox="0 0 24 24">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <div class="models-grid" id="modelsGrid"></div>
+          <button type="button" class="side-arrow-btn side-arrow-next" id="btnNextMoto" title="Siguiente">
+            <svg viewBox="0 0 24 24">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- PANEL DERECHO: CATEGORÍAS -->
+      <div class="categories-panel">
+        <div class="panel-top-bar">
+          <h2 class="speed-heading">CATEGORÍAS</h2>
+          <button class="view-all-link red" onclick="resetFiltros()">VER TODAS</button>
+        </div>
+        <div class="categories-grid" id="categoriesGrid">
+          <button class="category-tile" data-segmento="Naked" onclick="filtrarPorCategoria('Naked', this)">
+            <img src="categoria.png" alt="Naked" class="category-icon-img" onerror="this.src='img/categoria.png'">
+            <span class="category-label">NAKED</span>
+          </button>
+          <button class="category-tile" data-segmento="Adventure" onclick="filtrarPorCategoria('Adventure', this)">
+            <img src="categoria.png" alt="Adventure" class="category-icon-img" onerror="this.src='img/categoria.png'">
+            <span class="category-label">ADVENTURE</span>
+          </button>
+          <button class="category-tile" data-segmento="CUB" onclick="filtrarPorCategoria('CUB', this)">
+            <img src="categoria.png" alt="CUB" class="category-icon-img" onerror="this.src='img/categoria.png'">
+            <span class="category-label">CUB</span>
+          </button>
+          <button class="category-tile" data-segmento="Urbana" onclick="filtrarPorCategoria('Urbana', this)">
+            <img src="categoria.png" alt="Urbana" class="category-icon-img" onerror="this.src='img/categoria.png'">
+            <span class="category-label">URBANA</span>
+          </button>
+          <button class="category-tile" data-segmento="Sport" onclick="filtrarPorCategoria('Sport', this)">
+            <img src="categoria.png" alt="Sport" class="category-icon-img" onerror="this.src='img/categoria.png'">
+            <span class="category-label">SPORT</span>
+          </button>
+          <button class="category-tile" data-segmento="Trail" onclick="filtrarPorCategoria('Trail', this)">
+            <img src="categoria.png" alt="Trail" class="category-icon-img" onerror="this.src='img/categoria.png'">
+            <span class="category-label">TRAIL</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL EN VIVO DE ADMINISTRADOR (SOLO VISIBLE CON ROL ADMIN) -->
+    <div id="adminLiveBar" class="admin-live-bar">
+      <div class="admin-live-header">
+        <h3>Gestión en vivo · Rol Administrador (guardado en localStorage)</h3>
+        <button type="button" id="btnResetDemoData" class="view-all-link red">Restaurar datos demo</button>
+      </div>
+      <form id="adminPriceForm" class="admin-live-grid">
+        <div class="form-group" style="margin-bottom:0;">
+          <label for="adminSelectMoto">Modelo</label>
+          <select id="adminSelectMoto" class="form-control"></select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label for="adminPrecioARS">Precio ARS</label>
+          <input type="number" id="adminPrecioARS" class="form-control" min="1" required>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label for="adminPrecioUSD">Precio USD</label>
+          <input type="number" id="adminPrecioUSD" class="form-control" min="1" required>
+        </div>
+        <button type="submit" class="btn-primary" style="padding:10px 14px;">Guardar precio</button>
+      </form>
+      <div id="adminFeedbackMsg" class="form-feedback-ok"></div>
+    </div>
+  </section>
+
+  <!-- 5. FICHA DE INGENIERÍA -->
+  <section id="ingenieria" class="section-engineering">
+    <div class="engineering-container" id="modelDetailContainer"></div>
+  </section>
+
+  <!-- 6. MÓDULO DE CONTACTO -->
+  <section id="contacto" class="section-contact">
+    <div class="contact-wrapper">
+      <div id="contacto-landing">
+        <h2>Atención Directa de Fábrica</h2>
+        <div class="direct-channels">
+          <div class="channel-card">
+            <h4>Correo Electrónico</h4>
+            <p id="contactEmailText">factory360@gmail.com</p>
+            <div class="channel-sub-row">
+              <a id="mailtoDirectLink" href="mailto:factory360@gmail.com?subject=Consulta%20FACTORY%20360" class="channel-action-link">Enviar correo →</a>
+              <button type="button" id="btnCopyEmail" class="channel-action-link">Copiar correo</button>
+            </div>
+          </div>
+          <div class="channel-card">
+            <h4>Atención Telefónica / WhatsApp</h4>
+            <p>+54 9 388 463-6369</p>
+            <div class="channel-sub-row">
+              <a id="whatsappDirectLink" href="https://wa.me/5493884636369?text=Hola%20FACTORY%20360%2C%20quiero%20realizar%20una%20consulta." target="_blank" rel="noopener noreferrer" class="channel-action-link">Abrir WhatsApp →</a>
+            </div>
+          </div>
+          <div class="channel-card">
+            <h4>Red de Concesionarios</h4>
+            <p>Salas de Venta Oficiales · Jujuy / Arg.</p>
+            <a href="https://maps.app.goo.gl/SrgMYPLB93kcsAHh6" target="_blank" rel="noopener noreferrer" class="branch-map-link">
+              Ver ubicación en Google Maps →
+            </a>
+          </div>
+        </div>
+        <div id="channelActionNotice" class="form-feedback-ok" style="text-align:center; margin-bottom:1rem;"></div>
+        <button class="btn-primary" id="btnAbrirForm">Completar Formulario Técnico</button>
+      </div>
+
+      <div id="contacto-form-view">
+        <h3>Formulario de Requerimiento Técnico</h3>
+        <form id="techForm" novalidate>
+          <div class="form-group">
+            <label for="inputNombreCliente">Nombre y Apellido</label>
+            <input type="text" class="form-control" id="inputNombreCliente" placeholder="Ingrese su nombre y apellido...">
+          </div>
+          <div class="form-group">
+            <label for="selectVehiculo">Vehículo de Interés (Catálogo Oficial)</label>
+            <select class="form-control" id="selectVehiculo">
+              <option value="CB300F TWISTER">CB300F TWISTER (293.5 cc)</option>
+              <option value="XR300L Tornado">XR300L Tornado (293.5 cc)</option>
+              <option value="Wave 110S">Wave 110S (110 cc)</option>
+              <option value="NC750X">NC750X (745 cc)</option>
+              <option value="NAVI">NAVI (109 cc)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="selectMotivo">Motivo de Solicitud</label>
+            <select class="form-control" id="selectMotivo">
+              <option value="Consulta Comercial">Consulta Comercial</option>
+              <option value="Servicio Técnico">Servicio Técnico</option>
+              <option value="Garantía">Garantía</option>
+              <option value="Repuestos">Repuestos</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inputConsultaMensaje">Mensaje / Consulta Técnica</label>
+            <textarea class="form-control" id="inputConsultaMensaje" rows="4" placeholder="Describa su requerimiento..."></textarea>
+          </div>
+          <div id="techFormFeedback" class="form-feedback-error"></div>
+          <div class="form-footer-actions">
+            <button type="button" class="btn-back-channels" id="btnVolverCanales">← Volver a canales directos</button>
+            <button type="submit" class="btn-primary">Enviar consulta a fábrica</button>
+          </div>
+        </form>
+
+        <div id="consultasHistorialBox" class="consultas-historial-box">
+          <h4>Historial guardado en la app (localStorage)</h4>
+          <div id="consultasHistorialList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const TOTAL_FRAMES_360 = 12;
+    const RUTA_VISOR_360_BASE = "visor-360/index.html";
+    const EMAIL_CONTACTO = "factory360@gmail.com";
+    const WHATSAPP_NUMERO = "5493884636369";
+
+    const STORAGE_KEYS = {
+      MOTOS: "factory360_motos_v1",
+      SESSION: "factory360_sesion_v1",
+      FAVS_BY_ROLE: "factory360_favoritos_v1",
+      CONSULTAS: "factory360_consultas_v1"
+    };
+
+    const catalogoMotosBase = [
+      {
+        id: 1,
+        carpetaNumero: 1,
+        modelo: "CB300F TWISTER",
+        etiqueta: "MODELO 2026",
+        marca: "HONDA",
+        segmento: "Naked",
+        categorias: ["Naked", "Sport"],
+        cilindrada: "293.5cc",
+        potencia: "24.1 HP",
+        peso: "153 kg",
+        transmision: "6 velocidades",
+        ingenieria: "Monocilíndrico 4T de 293 cc con 4 válvulas, inyección electrónica, radiador de aceite y embrague anti-rebote.",
+        descripcion: "Diseño agresivo de postura ágil para ciudad y ruta con respuesta firme en media y alta rpm.",
+        fraseLlamativa: "ACTITUD NAKED, RESPUESTA PURA EN CADA CURVA.",
+        fichaUrl: "modelotwister.png",
+        imagenIngenieria: "cb300f.png",
+        fallbackImagenIngenieria: "img/cb300f.png",
+        configuracion360: {
+          visorUrl: `${RUTA_VISOR_360_BASE}?modelo=1`,
+          carpetaBase: "imagenes",
+          subcarpeta: "moto1",
+          totalFrames: TOTAL_FRAMES_360
+        },
+        apartadosIngenieria: [
+          {
+            tipo: "diseno",
+            titulo: "Diseño",
+            explicacion: "Líneas deportivas con el espíritu de la CB250 Twister.",
+            items: [
+              {
+                subtitulo: "ESTILO AGRESIVO",
+                detalle: "Sus líneas deportivas hacen de este modelo un vehículo atractivo en imagen, con el espíritu de su antecesor, la CB250 Twister.",
+                imagen: "cbdiseno.png",
+                fallbackImagen: "img/cbdiseno.png"
+              }
+            ]
+          },
+          {
+            tipo: "tecnologia",
+            titulo: "Tecnología",
+            explicacion: "Tablero digital moderno y puerto de carga USB-C.",
+            items: [
+              {
+                subtitulo: "TABLERO DIGITAL",
+                detalle: "El tablero de instrumentos tiene un diseño atractivo y moderno, destacado vs sus competidores por ser digital, y además brindando una completa información.",
+                imagen: "cbtablero.png",
+                fallbackImagen: "img/cbtablero.png"
+              },
+              {
+                subtitulo: "PUERTO USB",
+                detalle: "Posee puerto de carga USB-C (5V: 3A), permitiendo la carga de dispositivos electrónicos móviles.",
+                imagen: "cbusb.png",
+                fallbackImagen: "img/cbusb.png"
+              }
+            ]
+          },
+          {
+            tipo: "seguridad",
+            titulo: "Seguridad",
+            explicacion: "ABS de doble canal y control de tracción HSTC.",
+            items: [
+              {
+                subtitulo: "ABS DE DOBLE CANAL",
+                detalle: "Posee sistema de ABS de doble canal. Si alguna de las ruedas se bloquea, el sistema limita o reduce el frenado en esa rueda para evitar el derrape y permitir un mejor control durante el frenado.",
+                imagen: "cbabs.png",
+                fallbackImagen: "img/cbabs.png"
+              },
+              {
+                subtitulo: "CONTROL DE TRACCIÓN HSTC",
+                detalle: "La unidad ECU calcula el deslizamiento de la rueda trasera en función de los sensores de velocidad de la rueda delantera y la trasera y regula la inyección de combustible para optimizar el par motor y mitigar el patinamiento. Puede desactivarse mediante el usuario.",
+                imagen: "cbcontrol.png",
+                fallbackImagen: "img/cbcontrol.png"
+              }
+            ]
+          },
+          {
+            tipo: "suspension",
+            titulo: "Suspensión",
+            explicacion: "Horquilla invertida delantera y trasera regulable en 5 posiciones.",
+            items: [
+              {
+                subtitulo: "SUSPENSIÓN DELANTERA CON HORQUILLA INVERTIDA",
+                detalle: "Esta característica le brinda un valor extra de calidad, mejora la transmisión de vibraciones al manillar, y la sensación de conducción. Es un diferencial vs el mismo modelo que fuera lanzado en el mercado de Brasil.",
+                imagen: "cbdelantera.png",
+                fallbackImagen: "img/cbdelantera.png"
+              },
+              {
+                subtitulo: "SUSPENSIÓN TRASERA DE 5 POSICIONES",
+                detalle: "Puede ajustar la precarga del muelle mediante el regulador para adaptarla a la carga o la superficie de la carretera, en condición más blanda o más dura.",
+                imagen: "cbtrasera.png",
+                fallbackImagen: "img/cbtrasera.png"
+              }
+            ]
+          },
+          {
+            tipo: "motor",
+            titulo: "Motor",
+            explicacion: "Inyección electrónica, 293 cc, 4 válvulas y radiador de aceite.",
+            items: [
+              {
+                subtitulo: "INYECCIÓN ELECTRÓNICA",
+                detalle: "Posee un motor a inyección de 293cm3 con 4 válvulas a la cabeza. Además posee radiador de aceite para ayudar a mantener la viscosidad y temperatura del lubricante manteniendo una condición óptima de funcionamiento.",
+                imagen: "cbmotor.png",
+                fallbackImagen: "img/cbmotor.png"
+              }
+            ]
+          },
+          {
+            tipo: "transmision",
+            titulo: "Transmisión",
+            explicacion: "6 marchas y embrague anti-rebote.",
+            items: [
+              {
+                subtitulo: "6 MARCHAS Y EMBRAGUE ANTI-REBOTE",
+                detalle: "Transmisión de 6 marchas para obtener un mejor desempeño. Este modelo está equipado con embrague anti-rebote que reduce los efectos del frenado del motor en un rebaje brusco. Este sistema atenúa situaciones inesperadas de pérdida de maniobrabilidad por un rebaje accidental y/o fatiga al conductor en caminos que requieran frecuentes cambios de marcha.",
+                imagen: "cbtransmision.png",
+                fallbackImagen: "img/cbtransmision.png"
+              }
+            ]
+          }
+        ],
+        precioARS: 7450000,
+        precioUSD: 5800,
+        imagen: "modelotwister.png",
+        fallbackImagen: "img/modelotwister.png"
+      },
+      {
+        id: 2,
+        carpetaNumero: 2,
+        modelo: "XR300L Tornado",
+        etiqueta: "MODELO 2026",
+        marca: "HONDA",
+        segmento: "Adventure",
+        categorias: ["Adventure", "Trail"],
+        cilindrada: "293.5cc",
+        potencia: "24.8 HP",
+        peso: "149 kg",
+        transmision: "6 velocidades",
+        ingenieria: "Monocilíndrico 293,5 cc con inyección electrónica, baja fricción y caja de 6 velocidades con embrague asistido anti-rebote.",
+        descripcion: "Versatilidad off-road y urbana con despeje elevado, posición de manejo erguida y gran torque.",
+        fraseLlamativa: "DOMINÁ EL ASFALTO Y ABRÍ TU PROPIO CAMINO.",
+        fichaUrl: "modelotornado.png",
+        imagenIngenieria: "tornado.png",
+        fallbackImagenIngenieria: "img/tornado.png",
+        configuracion360: {
+          visorUrl: `${RUTA_VISOR_360_BASE}?modelo=2`,
+          carpetaBase: "imagenes",
+          subcarpeta: "moto2",
+          totalFrames: TOTAL_FRAMES_360
+        },
+        apartadosIngenieria: [
+          {
+            tipo: "motor",
+            titulo: "Motor",
+            explicacion: "293,5 cc con inyección electrónica y baja fricción.",
+            items: [
+              {
+                subtitulo: "COMBINACIÓN PERFECTA ENTRE AGILIDAD Y CONFORT",
+                detalle: "El nuevo monocilíndrico de 293,5 cc, de mayor rendimiento, ahora está alimentado por inyección electrónica, lo que incrementa también la eficiencia de combustible. La fricción reducida entre sus componentes evita las vibraciones, permitiéndole ser un motor suave en su funcionamiento, con buena entrega a bajo y medio régimen, ideal para el manejo cotidiano pero también para el manejo off-road.",
+                imagen: "tornadomotor.png",
+                fallbackImagen: "img/tornadomotor.png"
+              }
+            ]
+          },
+          {
+            tipo: "transmision",
+            titulo: "Transmisión",
+            explicacion: "6 velocidades con embrague asistido anti-rebote.",
+            items: [
+              {
+                subtitulo: "RELACIONAMIENTO Y ENGRANAJE PRECISOS",
+                detalle: "La transmisión por cadena de 6 velocidades permite explotar al máximo el potencial del nuevo motor. El embrague ahora es asistido e incorpora la función anti-rebote. Además, el tensor de la cadena es más fácil de operar y su ajuste es más preciso.",
+                imagen: "tornadotransmision.png",
+                fallbackImagen: "img/tornadotransmision.png"
+              }
+            ]
+          },
+          {
+            tipo: "suspension",
+            titulo: "Suspensión",
+            explicacion: "Componentes Showa de 221 mm y Pro-Link en 7 posiciones.",
+            items: [
+              {
+                subtitulo: "CONFORT Y ESTABILIDAD",
+                detalle: "Fabricadas con componentes Showa de alta calidad y durabilidad, las horquillas delanteras de 221 mm de recorrido y el monoshock trasero Pro-Link ajustable en 7 posiciones otorgan confort y estabilidad en las más variadas condiciones de conducción.",
+                imagen: "tornadosus1.png",
+                fallbackImagen: "img/tornadosus1.png"
+              },
+              {
+                subtitulo: "CONFORT Y ESTABILIDAD",
+                detalle: "Fabricadas con componentes Showa de alta calidad y durabilidad, las horquillas delanteras de 221 mm de recorrido y el monoshock trasero Pro-Link ajustable en 7 posiciones otorgan confort y estabilidad en las más variadas condiciones de conducción.",
+                imagen: "tornadosus2.png",
+                fallbackImagen: "img/tornadosus2.png"
+              }
+            ]
+          },
+          {
+            tipo: "frenos",
+            titulo: "Frenos",
+            explicacion: "Discos Nissin (256 mm / 220 mm) y ABS de doble canal.",
+            items: [
+              {
+                subtitulo: "EFICIENCIA Y SEGURIDAD",
+                detalle: "Tanto el disco de freno delantero (256mm) como el disco trasero (220mm) son accionados por pinzas Nissin, que actúan con eficiencia y precisión al momento de frenar. El ABS de doble canal garantiza la máxima seguridad en el frenado, impidiendo el bloqueo de las ruedas.",
+                imagen: "tornadofreno1.png",
+                fallbackImagen: "img/tornadofreno1.png"
+              },
+              {
+                subtitulo: "EFICIENCIA Y SEGURIDAD",
+                detalle: "Tanto el disco de freno delantero (256mm) como el disco trasero (220mm) son accionados por pinzas Nissin, que actúan con eficiencia y precisión al momento de frenar. El ABS de doble canal garantiza la máxima seguridad en el frenado, impidiendo el bloqueo de las ruedas.",
+                imagen: "tornadofreno2.png",
+                fallbackImagen: "img/tornadofreno2.png"
+              }
+            ]
+          },
+          {
+            tipo: "tecnologia",
+            titulo: "Tecnología",
+            explicacion: "Iluminación Full LED y tablero 100% digital rediseñado.",
+            items: [
+              {
+                subtitulo: "ILUMINACIÓN FULL LED",
+                detalle: "La nueva XR300L Tornado incorpora iluminación Full LED tanto en el sector delantero como en el posterior. Esto no solo garantiza una excelente visibilidad, sino que contribuye a la seguridad, al permitirle al piloto ver y ser visto. Además, el nuevo diseño de las luces y de los carenados que las rodean, sumado a la tecnología LED, refuerzan el look aventurero y sofisticado de la motocicleta.",
+                imagen: "tornadoled.png",
+                fallbackImagen: "img/tornadoled.png"
+              },
+              {
+                subtitulo: "TABLERO 100% DIGITAL",
+                detalle: "El tablero 100% digital fue completamente rediseñado, ofreciendo no solo una mayor cantidad de información sino mejor visibilidad, facilitando su lectura. Como principales novedades, se destacan el tacómetro, el indicador de marcha, el medidor de combustible y el consumo de combustible promedio o en tiempo real.",
+                imagen: "tornadotablero.png",
+                fallbackImagen: "img/tornadotablero.png"
+              }
+            ]
+          },
+          {
+            tipo: "tanque",
+            titulo: "Tanque de combustible",
+            explicacion: "13,8 L de capacidad y carenados robustos.",
+            items: [
+              {
+                subtitulo: "TANQUE DE COMBUSTIBLE",
+                detalle: "El tanque ofrece una excelente autonomía gracias a sus 13,8L de capacidad. Los carenados que lo rodean realzan el aspecto robusto de la nueva XR300L Tornado.",
+                imagen: "tornadotanque.png",
+                fallbackImagen: "img/tornadotanque.png"
+              }
+            ]
+          }
+        ],
+        precioARS: 8950000,
+        precioUSD: 6950,
+        imagen: "modelotornado.png",
+        fallbackImagen: "img/modelotornado.png"
+      },
+      {
+        id: 3,
+        carpetaNumero: 3,
+        modelo: "Wave 110S",
+        etiqueta: "MODELO 2026",
+        marca: "HONDA",
+        segmento: "CUB",
+        categorias: ["CUB"],
+        cilindrada: "110cc",
+        potencia: "8.2 HP",
+        peso: "100 kg",
+        transmision: "4 velocidades semiautomática",
+        ingenieria: "Motor 110 cc refrigerado por aire, transmisión semiautomática de 4 velocidades y arranque eléctrico.",
+        descripcion: "Liviana, económica y práctica para el tránsito diario con suavidad de marcha y confiabilidad comprobada.",
+        fraseLlamativa: "AGILIDAD DIARIA CON ECONOMÍA QUE NO SE DETIENE.",
+        fichaUrl: "modelowave.png",
+        imagenIngenieria: "wave110s.png",
+        fallbackImagenIngenieria: "img/wave110s.png",
+        configuracion360: {
+          visorUrl: `${RUTA_VISOR_360_BASE}?modelo=3`,
+          carpetaBase: "imagenes",
+          subcarpeta: "moto3",
+          totalFrames: TOTAL_FRAMES_360
+        },
+        apartadosIngenieria: [
+          {
+            tipo: "motor",
+            titulo: "Motor",
+            explicacion: "110 cc refrigerado por aire, suave y económico.",
+            items: [
+              {
+                subtitulo: "EFICIENCIA Y MENOS MANTENIMIENTO",
+                detalle: "Su motor 110cc refrigerado por aire te ofrece un andar suave y confortable, sumado a su bajo consumo de combustible.",
+                imagen: "wavemotor.png",
+                fallbackImagen: "img/wavemotor.png"
+              }
+            ]
+          },
+          {
+            tipo: "diseno",
+            titulo: "Diseño",
+            explicacion: "Líneas aerodinámicas renovadas y modernas.",
+            items: [
+              {
+                subtitulo: "ESTÉTICA RENOVADA",
+                detalle: "Renovada por completo, sus líneas aerodinámicas proyectan un estilo más deportivo y moderno.",
+                imagen: "wavediseno.png",
+                fallbackImagen: "img/wavediseno.png"
+              }
+            ]
+          },
+          {
+            tipo: "seguridad",
+            titulo: "Seguridad",
+            explicacion: "Wave Cast Disc y sistema de frenado combinado CBS.",
+            items: [
+              {
+                subtitulo: "WAVE CAST DISC",
+                detalle: "Wave Cast Disc es la versión con freno delantero a disco, que además incorpora llantas de aleación.",
+                imagen: "wavedisc.png",
+                fallbackImagen: "img/wavedisc.png"
+              },
+              {
+                subtitulo: "SISTEMA CBS",
+                detalle: "Cumpliendo con los estándares de calidad más exigentes, la Wave 110S está fabricada con atención a los detalles y excelentes materiales. Además, incorpora sistema de frenado combinado (CBS), lo que la vuelve más eficiente a la hora de frenar.",
+                imagen: "wavesistema.png",
+                fallbackImagen: "img/wavesistema.png"
+              }
+            ]
+          },
+          {
+            tipo: "transmision",
+            titulo: "Transmisión",
+            explicacion: "Bajo peso y caja semiautomática de 4 velocidades.",
+            items: [
+              {
+                subtitulo: "FÁCIL DE MANEJAR",
+                detalle: "Su bajo peso y su transmisión semi-automática de 4 velocidades la convierten en la opción ideal para moverte por la ciudad todos los días.",
+                imagen: "wavetrans.png",
+                fallbackImagen: "img/wavetrans.png"
+              }
+            ]
+          },
+          {
+            tipo: "tecnologia",
+            titulo: "Tecnología",
+            explicacion: "Arranque eléctrico sumado al arranque a patada.",
+            items: [
+              {
+                subtitulo: "ARRANQUE ELÉCTRICO",
+                detalle: "Además del arranque a patada, incorpora el nuevo arranque eléctrico, una opción más fácil y rápida para encender tu Wave.",
+                imagen: "wavetecno.png",
+                fallbackImagen: "img/wavetecno.png"
+              }
+            ]
+          }
+        ],
+        precioARS: 2450000,
+        precioUSD: 1950,
+        imagen: "modelowave.png",
+        fallbackImagen: "img/modelowave.png"
+      },
+      {
+        id: 4,
+        carpetaNumero: 4,
+        modelo: "NC750X",
+        etiqueta: "MODELO 2026",
+        marca: "HONDA",
+        segmento: "Adventure",
+        categorias: ["Adventure", "Trail"],
+        cilindrada: "745cc",
+        potencia: "58.6 HP",
+        peso: "214 kg",
+        transmision: "6 velocidades",
+        ingenieria: "Bicilíndrico paralelo de carrera larga con centro de gravedad bajo y entrega progresiva de potencia.",
+        descripcion: "Pensada para viajes largos y uso mixto con estabilidad, comodidad y autonomía sobresaliente.",
+        fraseLlamativa: "GRAN CILINDRADA, ESTABILIDAD TOTAL EN CADA VIAJE.",
+        fichaUrl: "modelonc.png",
+        imagenIngenieria: "nc750x.png",
+        fallbackImagenIngenieria: "img/nc750x.png",
+        configuracion360: {
+          visorUrl: `${RUTA_VISOR_360_BASE}?modelo=4`,
+          carpetaBase: "imagenes",
+          subcarpeta: "moto4",
+          totalFrames: TOTAL_FRAMES_360
+        },
+        apartadosIngenieria: [
+          {
+            tipo: "diseno",
+            titulo: "Diseño",
+            explicacion: "Carenado frontal renovado, nuevas llantas y detalles sostenibles.",
+            items: [
+              {
+                subtitulo: "ACTITUD URBANA, ESTILO RENOVADO",
+                detalle: "La NC750X se actualiza con un diseño más moderno y funcional. Nuevo carenado frontal, diseño renovado de llantas y detalles premium como las costuras en el asiento realzan su presencia. Además, utiliza materiales sostenibles como el Durabio, reafirmando su compromiso con el medio ambiente.",
+                imagen: "ncdiseno.png",
+                fallbackImagen: "img/ncdiseno.png"
+              }
+            ]
+          },
+          {
+            tipo: "seguridad",
+            titulo: "Seguridad",
+            explicacion: "HSTC, discos Nissin y ABS de doble canal para máximo control.",
+            items: [
+              {
+                subtitulo: "CONTROL DE TRACCIÓN",
+                detalle: "El sistema HSTC (Honda Selectable Torque Control) controla la tracción del neumático trasero en todo momento, garantizando una conducción sin derrapes.",
+                imagen: "nccontrol.png",
+                fallbackImagen: "img/nccontrol.png"
+              },
+              {
+                subtitulo: "FRENADO POTENTE Y CONFIABLE",
+                detalle: "Doble disco delantero Nissin de 296mm y disco trasero de 240mm: frenado firme en todo tipo de trayecto.",
+                imagen: "ncfrenado.png",
+                fallbackImagen: "img/ncfrenado.png"
+              },
+              {
+                subtitulo: "ABS DE DOBLE CANAL",
+                detalle: "La nueva NC750X cuenta con ABS de doble canal, que evita bloqueos y mejora el control en frenadas exigentes.",
+                imagen: "ncabs.png",
+                fallbackImagen: "img/ncabs.png"
+              }
+            ]
+          },
+          {
+            tipo: "tecnologia",
+            titulo: "Tecnología",
+            explicacion: "Iluminación Full LED, pantalla TFT de 5” y 4 modos con TBW.",
+            items: [
+              {
+                subtitulo: "ILUMINACIÓN FULL LED",
+                detalle: "Fundamental para los trayectos largos, el sistema de luminación FULL LED otorga mayor iluminación y visibilidad.",
+                imagen: "ncled.png",
+                fallbackImagen: "img/ncled.png"
+              },
+              {
+                subtitulo: "TODA LA INFORMACIÓN, AL INSTANTE",
+                detalle: "La nueva pantalla TFT de 5” muestra de forma clara los datos del viaje y permite personalizar funciones con solo un botón. Más conectada, más intuitiva.",
+                imagen: "ncinfo.png",
+                fallbackImagen: "img/ncinfo.png"
+              },
+              {
+                subtitulo: "MODOS DE CONDUCCIÓN",
+                detalle: "Gracias a su acelerador electrónico (TBW - Throttle By Wire), la nueva NC750X ofrece 4 modos de conducción: Standard, Sport, Rain y User, siendo este último totalmente personalizable de acuerdo a las preferencias del piloto.",
+                imagen: "ncmodos.png",
+                fallbackImagen: "img/ncmodos.png"
+              }
+            ]
+          },
+          {
+            tipo: "confort",
+            titulo: "Confort",
+            explicacion: "Asiento de baja altura, compartimento de 23 L y Pro-Link 120 mm.",
+            items: [
+              {
+                subtitulo: "FACILIDAD DE MANEJO",
+                detalle: "La baja altura del asiento brinda mayor control y confianza, especialmente al detenerse.",
+                imagen: "ncmanejo.png",
+                fallbackImagen: "img/ncmanejo.png"
+              },
+              {
+                subtitulo: "ESPACIO PRÁCTICO Y FUNCIONAL",
+                detalle: "Ubicado en el lugar del tanque tradicional, el compartimento de carga ofrece 23 litros de capacidad útil, ideales para guardar objetos personales, equipamiento o lo necesario para el uso diario y viajes.",
+                imagen: "ncespacio.png",
+                fallbackImagen: "img/ncespacio.png"
+              },
+              {
+                subtitulo: "SUSPENSIÓN EQUILIBRADA",
+                detalle: "Horquilla delantera y monoshock trasero Pro-Link, ambos con 120mm de recorrido, listos para brindar confort en cualquier terreno.",
+                imagen: "ncsus.png",
+                fallbackImagen: "img/ncsus.png"
+              }
+            ]
+          }
+        ],
+        precioARS: 16800000,
+        precioUSD: 13200,
+        imagen: "modelonc.png",
+        fallbackImagen: "img/modelonc.png"
+      },
+      {
+        id: 5,
+        carpetaNumero: 5,
+        modelo: "NAVI",
+        etiqueta: "MODELO 2026",
+        marca: "HONDA",
+        segmento: "Urbana",
+        categorias: ["Urbana"],
+        cilindrada: "109cc",
+        potencia: "7.8 HP",
+        peso: "104 kg",
+        transmision: "Automática CVT",
+        ingenieria: "Motor 109 cc refrigerado por aire con transmisión automática CVT, sin cambios manuales ni embrague.",
+        descripcion: "Compacta, intuitiva y ágil para moverse por la ciudad con facilidad de conducción desde el primer kilómetro.",
+        fraseLlamativa: "SUBITE, ACELERÁ Y SENTÍ LA CIUDAD A TU RITMO.",
+        fichaUrl: "modelonavi.png",
+        imagenIngenieria: "navi.png",
+        fallbackImagenIngenieria: "img/navi.png",
+        configuracion360: {
+          visorUrl: `${RUTA_VISOR_360_BASE}?modelo=5`,
+          carpetaBase: "imagenes",
+          subcarpeta: "moto5",
+          totalFrames: TOTAL_FRAMES_360
+        },
+        apartadosIngenieria: [
+          {
+            tipo: "diseno",
+            titulo: "Diseño",
+            explicacion: "Propuesta de movilidad única, práctica y divertida.",
+            items: [
+              {
+                subtitulo: "ESTILO ÚNICO",
+                detalle: "No es una moto, no es un scooter... ¡es una NAVi! Con un diseño inconfundible, la nueva Honda NAVi llegó para cambiarlo todo, a través de una propuesta de movilidad única, practica y divertida.",
+                imagen: "navidiseno.png",
+                fallbackImagen: "img/navidiseno.png"
+              }
+            ]
+          },
+          {
+            tipo: "motor_transmision",
+            titulo: "Motor y Transmisión",
+            explicacion: "109 cc refrigerado por aire y transmisión automática CVT.",
+            items: [
+              {
+                subtitulo: "CONFIABLE, ECONÓMICA Y DIVERTIDA",
+                detalle: "El motor de la nueva Honda NAVi es de 109 cc, está refrigerado por aire y se asocia a una transmisión automática CVT. ¿El resultado? Un combo mecánico confiable y eficiente. Y una experiencia de manejo divertidísima por la ausencia de cambios y de embrague.",
+                imagen: "navimotor.png",
+                fallbackImagen: "img/navimotor.png"
+              }
+            ]
+          },
+          {
+            tipo: "practicidad",
+            titulo: "Practicidad",
+            explicacion: "Dimensiones compactas, asiento bajo, baúl y economía.",
+            items: [
+              {
+                subtitulo: "COMPACTA Y LIVIANA",
+                detalle: "1808 milímetros de largo, 748 milímetros de ancho, 1039 milímetros de alto y 104 kilos de peso en orden de marcha. Números que hacen de la nueva Honda NAVI una moto fácil de manejar, de maniobrar y de estacionar.",
+                imagen: "naviliviana.png",
+                fallbackImagen: "img/naviliviana.png"
+              },
+              {
+                subtitulo: "BAJA ALTURA DEL ASIENTO",
+                detalle: "762 milímetros es la altura del asiento, que además es lo suficientemente largo para que cualquier piloto encuentre la posición de manejo que más se ajuste a su tamaño.",
+                imagen: "naviasiento.png",
+                fallbackImagen: "img/naviasiento.png"
+              },
+              {
+                subtitulo: "BAÚL PORTAOBJETOS INTEGRADO",
+                detalle: "Llevar tus cosas con vos nunca fue tan fácil; la nueva Honda NAVI incluye de serie un baúl portaobjetos integrado.",
+                imagen: "navibaul.png",
+                fallbackImagen: "img/navibaul.png"
+              },
+              {
+                subtitulo: "ECONOMÍA DE COMBUSTIBLE",
+                detalle: "Gracias al tanque de combustible de 3,5 litros y al trabajo eficiente del motor y de la transmisión, la nueva Honda NAVI ofrece una autonomía más que suficiente para los traslados en la ciudad.",
+                imagen: "navieconomia.png",
+                fallbackImagen: "img/navieconomia.png"
+              }
+            ]
+          },
+          {
+            tipo: "frenos",
+            titulo: "Frenos",
+            explicacion: "Tambor de 130 mm en ambas ruedas con sistema CBS.",
+            items: [
+              {
+                subtitulo: "CBS-COMBINED BRAKING SYSTEM",
+                detalle: "La nueva Honda NAVI equipa frenos a tambor de 130 milímetros en ambas ruedas, que junto al sistema de frenado combinado (CBS), ofrecen una excelente respuesta en las detenciones.",
+                imagen: "navifrenos.png",
+                fallbackImagen: "img/navifrenos.png"
+              }
+            ]
+          },
+          {
+            tipo: "suspension",
+            titulo: "Suspensión",
+            explicacion: "Horquilla delantera (89 mm) y mono-amortiguador (70 mm).",
+            items: [
+              {
+                subtitulo: "CONFORT CITADINO",
+                detalle: "La horquilla telescópica delantera de 89 milímetros de recorrido brinda una suspensión suave y precisa, ideal para absorber las irregularidades del camino y ofrecer una conducción cómoda en entornos urbanos.",
+                imagen: "navidelantera.png",
+                fallbackImagen: "img/navidelantera.png"
+              },
+              {
+                subtitulo: "CONFORT CITADINO",
+                detalle: "El mono-amortiguador trasero, con 70 milímetros de recorrido, complementa el confort de marcha al suavizar impactos y mantener la estabilidad, haciendo que cada trayecto en la ciudad sea más placentero.",
+                imagen: "navitrasera.png",
+                fallbackImagen: "img/navitrasera.png"
+              }
+            ]
+          }
+        ],
+        precioARS: 2180000,
+        precioUSD: 1700,
+        imagen: "modelonavi.png",
+        fallbackImagen: "img/modelonavi.png"
+      }
+    ];
+
+    const cuentasDemo = {
+      usuario: { pass: "1234", role: "USUARIO", label: "Usuario" },
+      "usuario@factory360.com": { pass: "1234", role: "USUARIO", label: "Usuario" },
+      admin: { pass: "admin123", role: "ADMIN", label: "Admin" },
+      "admin@factory360.com": { pass: "admin123", role: "ADMIN", label: "Admin" }
+    };
+
+    function leerStorage(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+    function guardarStorage(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {}
+    }
+
+    let catalogoMotos = leerStorage(STORAGE_KEYS.MOTOS, catalogoMotosBase);
+    let sesionActiva = leerStorage(STORAGE_KEYS.SESSION, { loggedIn: false, role: "USUARIO", user: "usuario" });
+    let favoritosPorRol = leerStorage(STORAGE_KEYS.FAVS_BY_ROLE, { USUARIO: [1], ADMIN: [1, 2] });
+    let consultasGuardadas = leerStorage(STORAGE_KEYS.CONSULTAS, []);
+
+    const categoriasDisponibles = ["Naked", "Adventure", "CUB", "Urbana", "Sport", "Trail"];
+    let monedaActual = 'ARS';
+    let viendoSoloFavoritosCatalogo = false;
+    let categoriaActiva = null;
+    let startIndex = 0;
+    let modeloSeleccionadoId = catalogoMotos[0].id;
+    let apartadoSeleccionadoIndex = null;
+    let subItemIndex = 0;
+    let visor360Abierto = false;
+    let modoFavoritoExpandido = false;
+
+    function getFavoritosActuales() {
+      const r = sesionActiva.role || "USUARIO";
+      if (!Array.isArray(favoritosPorRol[r])) favoritosPorRol[r] = [];
+      return favoritosPorRol[r];
+    }
+
+    function actualizarInterfazRol() {
+      const roleBadgeBtn = document.getElementById('roleBadgeBtn');
+      const adminLiveBar = document.getElementById('adminLiveBar');
+      const historialBox = document.getElementById('consultasHistorialBox');
+      const rol = sesionActiva.role || "USUARIO";
+      roleBadgeBtn.textContent = rol;
+      if (rol === "ADMIN") {
+        adminLiveBar.classList.add('visible');
+        if (historialBox) historialBox.classList.add('visible');
+        poblarSelectAdmin();
+      } else {
+        adminLiveBar.classList.remove('visible');
+        if (historialBox) historialBox.classList.remove('visible');
+      }
+      document.getElementById('garageCount').innerText = getFavoritosActuales().length;
+      renderHistorialConsultas();
+    }
+
+    /* --- SECUENCIA SPLASH (LOGO.PNG -> INICIO.PNG + 1 SEG -> ALTERNADO) --- */
+    const splashScreen = document.getElementById('splashScreen');
+    const splashStageImg = document.getElementById('splashStageImg');
+    let splashTimers = [];
+
+    function limpiarTimersSplash() {
+      splashTimers.forEach(id => clearTimeout(id));
+      splashTimers = [];
+    }
+
+    function resetearAnimacionControles() {
+      const items = [
+        document.getElementById('loginUserInput'),
+        document.getElementById('loginPassInput'),
+        document.getElementById('loginForgotWrap'),
+        document.getElementById('btnSubmitLogin')
+      ];
+      items.forEach(el => el.classList.remove('entered'));
+    }
+
+    function iniciarSecuenciaSplash() {
+      limpiarTimersSplash();
+      resetearAnimacionControles();
+      document.getElementById('loginErrorMsg').textContent = "";
+      splashScreen.classList.remove('hidden', 'phase-login');
+      splashStageImg.src = "logo.png";
+      splashStageImg.dataset.fb = "";
+      splashStageImg.classList.add('is-logo');
+      splashStageImg.onerror = function() {
+        if (!this.dataset.fb) {
+          this.dataset.fb = "1";
+          this.src = "img/logo.png";
+        }
+      };
+
+      const t1 = setTimeout(() => {
+        splashStageImg.classList.remove('is-logo');
+        splashStageImg.dataset.fb = "";
+        splashStageImg.onerror = function() {
+          if (!this.dataset.fb) {
+            this.dataset.fb = "1";
+            this.src = "img/inicio.png";
+          }
+        };
+        splashStageImg.src = "inicio.png";
+      }, 2200);
+
+      const t2 = setTimeout(() => {
+        splashScreen.classList.add('phase-login');
+        const ordenEntrada = [
+          document.getElementById('loginUserInput'),
+          document.getElementById('loginPassInput'),
+          document.getElementById('loginForgotWrap'),
+          document.getElementById('btnSubmitLogin')
+        ];
+        ordenEntrada.forEach((el, idx) => {
+          const tStep = setTimeout(() => {
+            el.classList.add('entered');
+          }, idx * 180);
+          splashTimers.push(tStep);
+        });
+      }, 3200);
+
+      splashTimers.push(t1, t2);
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const userVal = document.getElementById('loginUserInput').value.trim().toLowerCase();
+      const passVal = document.getElementById('loginPassInput').value.trim();
+      const errorEl = document.getElementById('loginErrorMsg');
+
+      const cuenta = cuentasDemo[userVal];
+      if (!cuenta || cuenta.pass !== passVal) {
+        errorEl.textContent = "Dato ingresado Incorrecto";
+        return;
+      }
+
+      errorEl.textContent = "";
+      sesionActiva = { loggedIn: true, role: cuenta.role, user: userVal };
+      guardarStorage(STORAGE_KEYS.SESSION, sesionActiva);
+      actualizarInterfazRol();
+      renderCatalogo();
+      splashScreen.classList.add('hidden');
+    });
+
+    /* --- MODAL RECUPERAR CONTRASEÑA --- */
+    const recoveryModal = document.getElementById('recoveryModal');
+    document.getElementById('btnForgotPassword').addEventListener('click', () => {
+      document.getElementById('recoveryInput').value = "";
+      document.getElementById('recoveryFeedback').textContent = "";
+      recoveryModal.classList.add('open');
+    });
+    document.getElementById('btnCloseRecovery').addEventListener('click', () => {
+      recoveryModal.classList.remove('open');
+    });
+    document.getElementById('btnConfirmRecovery').addEventListener('click', () => {
+      const val = document.getElementById('recoveryInput').value.trim();
+      const fb = document.getElementById('recoveryFeedback');
+      if (!val) {
+        fb.className = "form-feedback-error";
+        fb.textContent = "Dato ingresado Incorrecto";
+        return;
+      }
+      fb.className = "form-feedback-ok";
+      fb.textContent = `Aviso de recuperación generado para "${val}".`;
+    });
+
+    document.getElementById('btnOpenLoginScreen').addEventListener('click', () => {
+      iniciarSecuenciaSplash();
+    });
+    document.getElementById('roleBadgeBtn').addEventListener('click', () => {
+      iniciarSecuenciaSplash();
+    });
+
+    /* --- ADMIN EN VIVO --- */
+    function poblarSelectAdmin() {
+      const sel = document.getElementById('adminSelectMoto');
+      if (!sel) return;
+      sel.innerHTML = catalogoMotos.map(m => `<option value="${m.id}">${m.modelo}</option>`).join('');
+      cargarValoresAdmin();
+    }
+    function cargarValoresAdmin() {
+      const sel = document.getElementById('adminSelectMoto');
+      const moto = catalogoMotos.find(m => m.id === Number(sel.value)) || catalogoMotos[0];
+      if (!moto) return;
+      document.getElementById('adminPrecioARS').value = moto.precioARS;
+      document.getElementById('adminPrecioUSD').value = moto.precioUSD;
+    }
+    document.getElementById('adminSelectMoto').addEventListener('change', cargarValoresAdmin);
+    document.getElementById('adminPriceForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = Number(document.getElementById('adminSelectMoto').value);
+      const ars = Number(document.getElementById('adminPrecioARS').value);
+      const usd = Number(document.getElementById('adminPrecioUSD').value);
+      const msg = document.getElementById('adminFeedbackMsg');
+      if (!ars || ars <= 0 || !usd || usd <= 0) {
+        msg.className = "form-feedback-error";
+        msg.textContent = "Dato ingresado Incorrecto";
+        return;
+      }
+      catalogoMotos = catalogoMotos.map(m => m.id === id ? { ...m, precioARS: ars, precioUSD: usd } : m);
+      guardarStorage(STORAGE_KEYS.MOTOS, catalogoMotos);
+      msg.className = "form-feedback-ok";
+      msg.textContent = "Precios guardados en localStorage.";
+      renderCatalogo();
+    });
+    document.getElementById('btnResetDemoData').addEventListener('click', () => {
+      catalogoMotos = JSON.parse(JSON.stringify(catalogoMotosBase));
+      favoritosPorRol = { USUARIO: [1], ADMIN: [1, 2] };
+      consultasGuardadas = [];
+      guardarStorage(STORAGE_KEYS.MOTOS, catalogoMotos);
+      guardarStorage(STORAGE_KEYS.FAVS_BY_ROLE, favoritosPorRol);
+      guardarStorage(STORAGE_KEYS.CONSULTAS, consultasGuardadas);
+      actualizarInterfazRol();
+      renderCatalogo();
+      renderHistorialConsultas();
+      document.getElementById('adminFeedbackMsg').className = "form-feedback-ok";
+      document.getElementById('adminFeedbackMsg').textContent = "Datos demo restaurados.";
+    });
+
+    const formatARS = (num) => '$ ' + Number(num).toLocaleString('es-AR') + ' ARS';
+    const formatUSD = (num) => 'USD $ ' + Number(num).toLocaleString('en-US');
+    function obtenerPrecioActivo(moto) {
+      return monedaActual === 'ARS' ? formatARS(moto.precioARS) : formatUSD(moto.precioUSD);
+    }
+    function obtenerUrlVisor360(moto) {
+      const numeroModelo = moto.carpetaNumero || moto.id || 1;
+      return moto.configuracion360?.visorUrl || `${RUTA_VISOR_360_BASE}?modelo=${numeroModelo}`;
+    }
+
+    function obtenerIconoContornoRojo(tipo) {
+      switch (tipo) {
+        case "tecnologia":
+          return `<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>`;
+        case "motor":
+          return `<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`;
+        case "transmision":
+          return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`;
+        case "seguridad":
+          return `<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>`;
+        case "suspension":
+          return `<svg viewBox="0 0 24 24"><path d="M6 4h12"></path><path d="M6 20h12"></path><polyline points="8 7 16 10 8 13 16 16 8 17"></polyline></svg>`;
+        case "frenos":
+          return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="3" x2="12" y2="8"></line><line x1="12" y1="16" x2="12" y2="21"></line></svg>`;
+        case "tanque":
+          return `<svg viewBox="0 0 24 24"><path d="M4 13c0-3.5 3.5-6 8-6s8 2.5 8 6v4H4v-4z"></path><line x1="9" y1="7" x2="15" y2="7"></line></svg>`;
+        case "diseno":
+          return `<svg viewBox="0 0 24 24"><polygon points="12 2 19 8.5 16 21 8 21 5 8.5 12 2"></polygon><line x1="12" y1="2" x2="12" y2="21"></line></svg>`;
+        case "confort":
+          return `<svg viewBox="0 0 24 24"><path d="M4 15h16"></path><path d="M6 15v-4a6 6 0 0 1 12 0v4"></path><path d="M8 15v4"></path><path d="M16 15v4"></path></svg>`;
+        case "motor_transmision":
+          return `<svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="4"></circle><circle cx="17" cy="12" r="3"></circle><line x1="13" y1="12" x2="14" y2="12"></line></svg>`;
+        case "practicidad":
+        default:
+          return `<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"></rect><path d="M8 6V4h8v2"></path><line x1="12" y1="10" x2="12" y2="15"></line><line x1="9.5" y1="12.5" x2="14.5" y2="12.5"></line></svg>`;
+      }
+    }
+
+    function getMotosFiltradas() {
+      const favs = getFavoritosActuales();
+      if (viendoSoloFavoritosCatalogo) {
+        return catalogoMotos.filter(moto => favs.includes(moto.id));
+      }
+      const filtroTexto = document.getElementById('searchInput').value.trim().toLowerCase();
+      return catalogoMotos.filter(moto => {
+        const coincideTexto = !filtroTexto ||
+          moto.modelo.toLowerCase().includes(filtroTexto) ||
+          moto.segmento.toLowerCase().includes(filtroTexto) ||
+          moto.categorias.some(c => c.toLowerCase().includes(filtroTexto));
+        const coincideCategoria = !categoriaActiva ||
+          moto.categorias.includes(categoriaActiva);
+        return coincideTexto && coincideCategoria;
+      });
+    }
+
+    function actualizarCabeceraModelos() {
+      const heading = document.getElementById('modelsPanelHeading');
+      const btnGarageHeader = document.getElementById('btnGarageHeader');
+      if (viendoSoloFavoritosCatalogo) {
+        heading.textContent = 'FAVORITOS';
+        btnGarageHeader.classList.add('active-mode');
+      } else {
+        heading.textContent = 'MODELOS';
+        btnGarageHeader.classList.remove('active-mode');
+      }
+    }
+
+    function renderCatalogo() {
+      actualizarCabeceraModelos();
+      const favs = getFavoritosActuales();
+      document.getElementById('garageCount').innerText = favs.length;
+      const grid = document.getElementById('modelsGrid');
+      grid.innerHTML = '';
+      const filtradas = getMotosFiltradas();
+      if (filtradas.length === 0) {
+        const mensajeVacio = viendoSoloFavoritosCatalogo
+          ? 'No tenés modelos guardados en favoritos todavía.'
+          : 'No hay unidades seleccionadas en esa categoría.';
+        grid.innerHTML = `<p style="color: var(--gris-texto); grid-column: 1 / -1; padding: 1.5rem 0;">${mensajeVacio}</p>`;
+        return;
+      }
+      const visiblesCount = window.innerWidth <= 900 ? 1 : (window.innerWidth <= 1100 ? 2 : 3);
+      const total = filtradas.length;
+      const itemsToRender = [];
+      if (total <= visiblesCount) {
+        itemsToRender.push(...filtradas);
+      } else {
+        for (let i = 0; i < visiblesCount; i++) {
+          itemsToRender.push(filtradas[(startIndex + i) % total]);
+        }
+      }
+      itemsToRender.forEach(moto => {
+        const esFavorito = favs.includes(moto.id);
+        const precioUnico = obtenerPrecioActivo(moto);
+        const card = document.createElement('div');
+        card.className = 'moto-card';
+        card.title = `Ver ingeniería y visor 360° de ${moto.modelo}`;
+        card.addEventListener('click', () => {
+          if (viendoSoloFavoritosCatalogo) {
+            abrirIngenieriaFormatoFavorito(moto.id);
+          } else {
+            conocerMasModelo(moto.id);
+          }
+        });
+        card.innerHTML = `
+          <img src="${moto.imagen}" alt="${moto.modelo}" class="moto-full-bg" onerror="this.src='${moto.fallbackImagen}'">
+          <div class="moto-card-scrim"></div>
+          <div class="moto-top-overlay">
+            <span class="segment-badge">${moto.etiqueta}</span>
+            <button type="button" class="fav-card-btn ${esFavorito ? 'saved' : ''}" title="Guardar en Favoritos">
+              <svg width="16" height="16" viewBox="0 0 24 24" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="moto-body">
+            <div>
+              <div class="moto-brand-tag">${moto.marca}</div>
+              <h3 class="moto-title">${moto.modelo}</h3>
+              <div class="moto-price-block">
+                <span class="price-main">${precioUnico}</span>
+              </div>
+              <div class="moto-specs-grid">
+                <div>
+                  <div class="spec-col-val">${moto.potencia}</div>
+                  <div class="spec-col-lbl">POTENCIA</div>
+                </div>
+                <div>
+                  <div class="spec-col-val">${moto.cilindrada}</div>
+                  <div class="spec-col-lbl">MOTOR</div>
+                </div>
+                <div>
+                  <div class="spec-col-val">${moto.peso}</div>
+                  <div class="spec-col-lbl">PESO</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        const favBtn = card.querySelector('.fav-card-btn');
+        favBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleGarage(moto.id);
+        });
+        grid.appendChild(card);
+      });
+    }
+
+    function renderVisor360EmbedHTML(moto, extraClass = '') {
+      const srcVisor = obtenerUrlVisor360(moto);
+      return `
+        <div class="viewer-container open ${extraClass}" id="visor360Box">
+          <h3>Visor 360° · ${moto.modelo}</h3>
+          <div class="visor-360-iframe-box">
+            <iframe
+              id="visor360Iframe"
+              class="visor-360-iframe"
+              src="${srcVisor}"
+              title="Visor 360° ${moto.modelo}"
+              loading="lazy">
+            </iframe>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDetalleModelo() {
+      const moto = catalogoMotos.find(m => m.id === modeloSeleccionadoId) || catalogoMotos[0];
+      const container = document.getElementById('modelDetailContainer');
+      const imagenPortadaEng = moto.imagenIngenieria || moto.imagen;
+      const fallbackPortadaEng = moto.fallbackImagenIngenieria || moto.fallbackImagen;
+      if (modoFavoritoExpandido) {
+        const apartadosAbiertosHTML = moto.apartadosIngenieria.map((apartado, idx) => {
+          const items = apartado.items || [];
+          const activeSubIdx = subItemIndex % Math.max(items.length, 1);
+          const itemActual = items[activeSubIdx] || {
+            subtitulo: apartado.titulo.toUpperCase(),
+            detalle: apartado.explicacion,
+            imagen: imagenPortadaEng,
+            fallbackImagen: fallbackPortadaEng
+          };
+          const tieneBucle = items.length >= 2;
+          const imgSrc = itemActual.imagen || imagenPortadaEng;
+          const imgFallback = itemActual.fallbackImagen || fallbackPortadaEng;
+          return `
+            <div class="fav-section-block">
+              <h3 class="fav-section-title-outside">${apartado.titulo}</h3>
+              <div class="selected-pillar-panel stacked-open">
+                <img src="${imgSrc}" alt="${moto.modelo} - ${itemActual.subtitulo}" class="pillar-bg-photo" onerror="this.src='${imgFallback}'">
+                <div class="pillar-full-height-gray-band">
+                  <div class="pillar-right-bottom-info">
+                    <div class="pillar-nav-text-row">
+                      <div class="pillar-text-content">
+                        <h4 class="pillar-wide-italic-title">${itemActual.subtitulo}</h4>
+                        <p class="pillar-transparent-copy">${itemActual.detalle}</p>
+                      </div>
+                      ${tieneBucle ? `
+                        <button type="button" class="pillar-thin-arrow" onclick="cambiarSubItemEnModoFavorito(${idx}, 1)" title="Siguiente">
+                          <svg viewBox="0 0 24 24">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                          </svg>
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+        container.innerHTML = `
+          <div class="engineering-top-header">
+            <h2 class="engineering-main-title">INGENIERÍA</h2>
+            <button class="btn-back-catalog" onclick="volverACatalogo()">← Volver a Modelos</button>
+          </div>
+          <div class="fav-hero-eng-banner">
+            <img src="${imagenPortadaEng}" alt="${moto.modelo}" class="fav-hero-eng-img" onerror="this.src='${fallbackPortadaEng}'">
+            <div class="fav-hero-eng-scrim"></div>
+            <div class="fav-hero-eng-content">
+              <div class="eng-model-thin-label">${moto.modelo}</div>
+              <p class="eng-catchphrase">${moto.fraseLlamativa}</p>
+              <p class="eng-model-summary">${moto.descripcion}</p>
+            </div>
+          </div>
+          ${renderVisor360EmbedHTML(moto, 'top-priority')}
+          <div class="fav-expanded-stack">
+            ${apartadosAbiertosHTML}
+          </div>
+        `;
+        return;
+      }
+      const apartadosHTML = moto.apartadosIngenieria.map((item, idx) => {
+        const isActive = apartadoSeleccionadoIndex === idx;
+        return `
+          <button type="button" class="eng-pillar-btn ${isActive ? 'active' : ''}" onclick="seleccionarApartadoIngenieria(${idx})">
+            <div class="eng-outline-icon-box">
+              ${obtenerIconoContornoRojo(item.tipo)}
+            </div>
+            <div class="eng-pillar-text">
+              <h3>${item.titulo}</h3>
+              <p>${item.explicacion}</p>
+            </div>
+          </button>
+        `;
+      }).join('');
+      const apartadoActual = apartadoSeleccionadoIndex !== null
+        ? moto.apartadosIngenieria[apartadoSeleccionadoIndex]
+        : null;
+      const itemsApartado = apartadoActual ? apartadoActual.items : [];
+      const itemActual = itemsApartado.length > 0
+        ? itemsApartado[subItemIndex % itemsApartado.length]
+        : null;
+      const tieneBucleDerecha = itemsApartado.length >= 2;
+      const imagenActual = (itemActual && itemActual.imagen) ? itemActual.imagen : moto.imagen;
+      const fallbackActual = (itemActual && itemActual.fallbackImagen) ? itemActual.fallbackImagen : moto.fallbackImagen;
+      container.innerHTML = `
+        <div class="engineering-top-header">
+          <h2 class="engineering-main-title">INGENIERÍA</h2>
+          <button class="btn-back-catalog" onclick="volverACatalogo()">← Volver a Modelos</button>
+        </div>
+        <div class="engineering-horizontal-card">
+          <div class="eng-badges-column">
+            ${apartadosHTML}
+          </div>
+          <div class="eng-showcase-right">
+            <img src="${imagenPortadaEng}" alt="${moto.modelo}" class="eng-moto-bg-img" onerror="this.src='${fallbackPortadaEng}'">
+            <div class="eng-showcase-overlay"></div>
+            <div class="eng-showcase-content">
+              <div class="eng-model-thin-label">${moto.modelo}</div>
+              <p class="eng-catchphrase">${moto.fraseLlamativa}</p>
+              <p class="eng-model-summary">${moto.descripcion}</p>
+              <div class="eng-cta-row">
+                <button type="button" class="btn-visor-360-box" onclick="abrirVisor360()">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                    <path d="M16 16h5v5"></path>
+                  </svg>
+                  <span>Visor 360</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="selected-pillar-panel ${(apartadoActual && itemActual) ? 'open' : ''}" id="pillarDetailPanel">
+          ${(apartadoActual && itemActual) ? `
+            <img src="${imagenActual}" alt="${moto.modelo} - ${itemActual.subtitulo}" class="pillar-bg-photo" onerror="this.src='${fallbackActual}'">
+            <div class="pillar-full-height-gray-band">
+              <div class="pillar-top-row">
+                <span class="pillar-red-tag"><span>${apartadoActual.titulo.toUpperCase()}</span></span>
+                <button type="button" class="pillar-close-btn" onclick="cerrarApartadoIngenieria()">Cerrar</button>
+              </div>
+              <div class="pillar-right-bottom-info">
+                <div class="pillar-nav-text-row">
+                  <div class="pillar-text-content">
+                    <h3 class="pillar-wide-italic-title">${itemActual.subtitulo}</h3>
+                    <p class="pillar-transparent-copy">${itemActual.detalle}</p>
+                  </div>
+                  ${tieneBucleDerecha ? `
+                    <button type="button" class="pillar-thin-arrow" onclick="cambiarSubItem(1)" title="Siguiente">
+                      <svg viewBox="0 0 24 24">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+        <div class="viewer-container ${visor360Abierto ? 'open' : ''}" id="visor360Box">
+          <h3>Visor 360° · ${moto.modelo}</h3>
+          <div class="visor-360-iframe-box">
+            <iframe
+              id="visor360Iframe"
+              class="visor-360-iframe"
+              src="${obtenerUrlVisor360(moto)}"
+              title="Visor 360° ${moto.modelo}"
+              loading="lazy">
+            </iframe>
+          </div>
+        </div>
+      `;
+    }
+
+    function abrirIngenieriaFormatoFavorito(id) {
+      modeloSeleccionadoId = id;
+      apartadoSeleccionadoIndex = null;
+      subItemIndex = 0;
+      visor360Abierto = true;
+      modoFavoritoExpandido = true;
+      renderDetalleModelo();
+      document.getElementById('ingenieria').scrollIntoView({ behavior: 'smooth' });
+    }
+    function cambiarSubItemEnModoFavorito(_apartadoIdx, delta) {
+      subItemIndex = Math.max(0, subItemIndex + delta);
+      renderDetalleModelo();
+    }
+    function seleccionarApartadoIngenieria(idx) {
+      modoFavoritoExpandido = false;
+      if (apartadoSeleccionadoIndex === idx) {
+        apartadoSeleccionadoIndex = null;
+        subItemIndex = 0;
+      } else {
+        apartadoSeleccionadoIndex = idx;
+        subItemIndex = 0;
+      }
+      renderDetalleModelo();
+      if (apartadoSeleccionadoIndex !== null) {
+        const panel = document.getElementById('pillarDetailPanel');
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+    function cambiarSubItem(delta) {
+      const moto = catalogoMotos.find(m => m.id === modeloSeleccionadoId) || catalogoMotos[0];
+      if (apartadoSeleccionadoIndex === null) return;
+      const items = moto.apartadosIngenieria[apartadoSeleccionadoIndex].items || [];
+      if (items.length <= 1) return;
+      subItemIndex = (subItemIndex + delta + items.length) % items.length;
+      renderDetalleModelo();
+    }
+    function cerrarApartadoIngenieria() {
+      apartadoSeleccionadoIndex = null;
+      subItemIndex = 0;
+      renderDetalleModelo();
+    }
+    function abrirVisor360() {
+      modoFavoritoExpandido = false;
+      visor360Abierto = true;
+      renderDetalleModelo();
+      const visor = document.getElementById('visor360Box');
+      if (visor) {
+        visor.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+    function abrirVisor360Modelo(id) {
+      modeloSeleccionadoId = id;
+      apartadoSeleccionadoIndex = null;
+      subItemIndex = 0;
+      modoFavoritoExpandido = false;
+      visor360Abierto = true;
+      renderDetalleModelo();
+      const visor = document.getElementById('visor360Box');
+      if (visor) {
+        visor.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        document.getElementById('ingenieria').scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+    function conocerMasModelo(id) {
+      modeloSeleccionadoId = id;
+      apartadoSeleccionadoIndex = null;
+      subItemIndex = 0;
+      modoFavoritoExpandido = false;
+      visor360Abierto = true;
+      renderDetalleModelo();
+      document.getElementById('ingenieria').scrollIntoView({ behavior: 'smooth' });
+    }
+    function volverACatalogo() {
+      modoFavoritoExpandido = false;
+      document.getElementById('modelos').scrollIntoView({ behavior: 'smooth' });
+    }
+    function filtrarPorCategoria(segmento, btnEl) {
+      viendoSoloFavoritosCatalogo = false;
+      if (categoriaActiva === segmento) {
+        categoriaActiva = null;
+        if (btnEl) btnEl.classList.remove('active');
+      } else {
+        categoriaActiva = segmento;
+        document.querySelectorAll('.category-tile').forEach(tile => tile.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+      }
+      startIndex = 0;
+      renderCatalogo();
+    }
+    function seleccionarCategoriaDesdeBuscador(segmento) {
+      viendoSoloFavoritosCatalogo = false;
+      categoriaActiva = segmento;
+      startIndex = 0;
+      document.querySelectorAll('.category-tile').forEach(tile => {
+        tile.classList.toggle('active', tile.dataset.segmento === segmento);
+      });
+      renderCatalogo();
+      ocultarSugerencias();
+      document.getElementById('modelos').scrollIntoView({ behavior: 'smooth' });
+    }
+    function resetFiltros() {
+      viendoSoloFavoritosCatalogo = false;
+      categoriaActiva = null;
+      startIndex = 0;
+      document.getElementById('searchInput').value = '';
+      document.querySelectorAll('.category-tile').forEach(tile => tile.classList.remove('active'));
+      ocultarSugerencias();
+      renderCatalogo();
+    }
+
+    document.getElementById('btnPrevMoto').addEventListener('click', () => {
+      const filtradas = getMotosFiltradas();
+      if (filtradas.length > 0) {
+        startIndex = (startIndex - 1 + filtradas.length) % filtradas.length;
+        renderCatalogo();
+      }
+    });
+    document.getElementById('btnNextMoto').addEventListener('click', () => {
+      const filtradas = getMotosFiltradas();
+      if (filtradas.length > 0) {
+        startIndex = (startIndex + 1) % filtradas.length;
+        renderCatalogo();
+      }
+    });
+    window.addEventListener('resize', () => {
+      renderCatalogo();
+    });
+
+    function toggleGarage(id) {
+      const rol = sesionActiva.role || "USUARIO";
+      const actual = getFavoritosActuales();
+      if (actual.includes(id)) {
+        favoritosPorRol[rol] = actual.filter(item => item !== id);
+      } else {
+        favoritosPorRol[rol] = [...actual, id];
+      }
+      guardarStorage(STORAGE_KEYS.FAVS_BY_ROLE, favoritosPorRol);
+      document.getElementById('garageCount').innerText = favoritosPorRol[rol].length;
+      if (viendoSoloFavoritosCatalogo && favoritosPorRol[rol].length === 0) {
+        viendoSoloFavoritosCatalogo = false;
+      }
+      renderCatalogo();
+    }
+
+    document.getElementById('btnGarageHeader').addEventListener('click', () => {
+      viendoSoloFavoritosCatalogo = !viendoSoloFavoritosCatalogo;
+      startIndex = 0;
+      renderCatalogo();
+      document.getElementById('modelos').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    const btnARS = document.getElementById('btnARS');
+    const btnUSD = document.getElementById('btnUSD');
+    btnARS.addEventListener('click', () => {
+      monedaActual = 'ARS';
+      btnARS.classList.add('active');
+      btnUSD.classList.remove('active');
+      renderCatalogo();
+      renderDetalleModelo();
+    });
+    btnUSD.addEventListener('click', () => {
+      monedaActual = 'USD';
+      btnUSD.classList.add('active');
+      btnARS.classList.remove('active');
+      renderCatalogo();
+      renderDetalleModelo();
+    });
+
+    const btnToggleSearch = document.getElementById('btnToggleSearch');
+    const searchInputBox = document.getElementById('searchInputBox');
+    const searchInput = document.getElementById('searchInput');
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    const searchWrapper = document.getElementById('searchWrapper');
+    function ocultarSugerencias() {
+      searchSuggestions.innerHTML = '';
+      searchSuggestions.classList.remove('show');
+    }
+    function esCoincidenciaEspecifica(nombreModelo, consulta) {
+      const palabras = nombreModelo.toLowerCase().split(/[\s-]+/);
+      return palabras.some(p => p.startsWith(consulta));
+    }
+    function renderSugerencias() {
+      const texto = searchInput.value.trim().toLowerCase();
+      searchSuggestions.innerHTML = '';
+      if (texto.length < 1) {
+        ocultarSugerencias();
+        return;
+      }
+      const especificos = texto.length > 2
+        ? catalogoMotos.filter(moto => esCoincidenciaEspecifica(moto.modelo, texto))
+        : [];
+      const relacionados = catalogoMotos.filter(moto =>
+        !especificos.some(esp => esp.id === moto.id) &&
+        (
+          moto.modelo.toLowerCase().includes(texto) ||
+          moto.segmento.toLowerCase().includes(texto) ||
+          moto.categorias.some(c => c.toLowerCase().includes(texto))
+        )
+      );
+      const categoriasRelacionadas = categoriasDisponibles.filter(cat =>
+        cat.toLowerCase().includes(texto)
+      );
+      if (especificos.length === 0 && relacionados.length === 0 && categoriasRelacionadas.length === 0) {
+        ocultarSugerencias();
+        return;
+      }
+      if (especificos.length > 0) {
+        const lblEsp = document.createElement('div');
+        lblEsp.className = 'suggestions-section-label';
+        lblEsp.textContent = 'Modelos específicos';
+        searchSuggestions.appendChild(lblEsp);
+        especificos.forEach(moto => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'suggestion-item';
+          btn.textContent = moto.modelo;
+          btn.addEventListener('click', () => {
+            searchInput.value = moto.modelo;
+            ocultarSugerencias();
+            conocerMasModelo(moto.id);
+          });
+          searchSuggestions.appendChild(btn);
+        });
+      }
+      if (relacionados.length > 0 || categoriasRelacionadas.length > 0) {
+        const similarBox = document.createElement('div');
+        similarBox.className = 'suggestions-similar-box';
+        const lblSim = document.createElement('div');
+        lblSim.className = 'suggestions-section-label';
+        lblSim.textContent = 'Relacionados';
+        similarBox.appendChild(lblSim);
+        relacionados.forEach(moto => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'suggestion-item';
+          btn.textContent = `${moto.modelo} · ${moto.segmento}`;
+          btn.addEventListener('click', () => {
+            searchInput.value = moto.modelo;
+            ocultarSugerencias();
+            conocerMasModelo(moto.id);
+          });
+          similarBox.appendChild(btn);
+        });
+        categoriasRelacionadas.forEach(cat => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'suggestion-item';
+          btn.textContent = `Categoría: ${cat.toUpperCase()}`;
+          btn.addEventListener('click', () => {
+            searchInput.value = cat;
+            seleccionarCategoriaDesdeBuscador(cat);
+          });
+          similarBox.appendChild(btn);
+        });
+        searchSuggestions.appendChild(similarBox);
+      }
+      searchSuggestions.classList.add('show');
+    }
+    btnToggleSearch.addEventListener('click', () => {
+      searchInputBox.classList.toggle('open');
+      if (searchInputBox.classList.contains('open')) {
+        searchInput.focus();
+        renderSugerencias();
+      } else {
+        ocultarSugerencias();
+      }
+    });
+    searchInput.addEventListener('input', () => {
+      viendoSoloFavoritosCatalogo = false;
+      startIndex = 0;
+      renderCatalogo();
+      renderSugerencias();
+    });
+    document.addEventListener('click', (e) => {
+      if (!searchWrapper.contains(e.target)) {
+        ocultarSugerencias();
+      }
+    });
+
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+      link.addEventListener('click', function() {
+        navLinks.forEach(item => item.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    /* --- MÓDULO DE CONTACTO Y FORMULARIO TÉCNICO --- */
+    document.getElementById('btnCopyEmail').addEventListener('click', async () => {
+      const notice = document.getElementById('channelActionNotice');
+      try {
+        await navigator.clipboard.writeText(EMAIL_CONTACTO);
+      } catch {}
+      notice.textContent = `Correo ${EMAIL_CONTACTO} listo para usar.`;
+    });
+
+    const btnAbrirForm = document.getElementById('btnAbrirForm');
+    const btnVolverCanales = document.getElementById('btnVolverCanales');
+    const landingContacto = document.getElementById('contacto-landing');
+    const formView = document.getElementById('contacto-form-view');
+    btnAbrirForm.addEventListener('click', () => {
+      landingContacto.style.display = 'none';
+      formView.style.display = 'block';
+      renderHistorialConsultas();
+      formView.scrollIntoView({ behavior: 'smooth' });
+    });
+    btnVolverCanales.addEventListener('click', () => {
+      formView.style.display = 'none';
+      landingContacto.style.display = 'block';
+      landingContacto.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    function renderHistorialConsultas() {
+      const box = document.getElementById('consultasHistorialBox');
+      const list = document.getElementById('consultasHistorialList');
+      if (!box || !list) return;
+      if ((sesionActiva.role || "USUARIO") !== "ADMIN") {
+        box.classList.remove('visible');
+        return;
+      }
+      box.classList.add('visible');
+      if (!consultasGuardadas.length) {
+        list.innerHTML = `<p style="color: var(--gris-texto); font-size: 0.82rem;">Todavía no hay consultas guardadas.</p>`;
+        return;
+      }
+      list.innerHTML = consultasGuardadas.map(c => `
+        <div class="consulta-item-card">
+          <strong>${c.nombre}</strong> · <span>${c.vehiculo}</span> (${c.motivo})<br>
+          <span style="color:#A1A1AA;">${c.fecha}</span> — ${c.mensaje}
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('techForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById('inputNombreCliente').value.trim();
+      const vehiculo = document.getElementById('selectVehiculo').value.trim();
+      const motivo = document.getElementById('selectMotivo').value.trim();
+      const mensaje = document.getElementById('inputConsultaMensaje').value.trim();
+      const feedback = document.getElementById('techFormFeedback');
+
+      if (!nombre || !vehiculo || !motivo || !mensaje) {
+        feedback.className = "form-feedback-error";
+        feedback.textContent = "Dato ingresado Incorrecto";
+        return;
+      }
+
+      const nuevaConsulta = {
+        nombre,
+        vehiculo,
+        motivo,
+        mensaje,
+        fecha: new Date().toLocaleString('es-AR')
+      };
+      consultasGuardadas = [nuevaConsulta, ...consultasGuardadas];
+      guardarStorage(STORAGE_KEYS.CONSULTAS, consultasGuardadas);
+      feedback.className = "form-feedback-ok";
+      feedback.textContent = "Consulta guardada correctamente en localStorage.";
+
+      const asunto = encodeURIComponent(`Consulta ${motivo} - ${vehiculo}`);
+      const cuerpo = encodeURIComponent(`Nombre: ${nombre}\nVehículo: ${vehiculo}\nMotivo: ${motivo}\nMensaje: ${mensaje}`);
+      document.getElementById('mailtoDirectLink').href = `mailto:${EMAIL_CONTACTO}?subject=${asunto}&body=${cuerpo}`;
+
+      document.getElementById('inputNombreCliente').value = "";
+      document.getElementById('inputConsultaMensaje').value = "";
+      renderHistorialConsultas();
+    });
+
+    actualizarInterfazRol();
+    renderCatalogo();
+    renderDetalleModelo();
+    renderHistorialConsultas();
+    iniciarSecuenciaSplash();
+  </script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor 360 - Moto PNG</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            /* Fondo elegante para notar la transparencia de tus PNGs */
+            background: linear-gradient(135deg, #000000, #000000);
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        .visor-container {
+            text-align: center;
+        }
+        canvas {
+            cursor: grab;
+            border-radius: 10px;
+            max-width: 100%;
+            height: auto;
+            user-select: none;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        p {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #b0b0d0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="visor-container">
+        <!-- Lienzo donde se dibujará la moto -->
+        <canvas id="visorCanvas" width="700" height="450"></canvas>
+        <p>Haz clic y arrastra hacia los lados para girar la moto 360°</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('visorCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Lee ?modelo=1..5 de la URL (por defecto 1 -> moto1)
+        const params = new URLSearchParams(window.location.search);
+        const modeloParam = parseInt(params.get('modelo'), 10);
+        const modeloId = (modeloParam >= 1 && modeloParam <= 5) ? modeloParam : 1;
+        const carpetaModelo = `moto${modeloId}`;
+
+        const totalFrames = 12;
+        const imagenes = [];
+        let indiceActual = 0;
+        let imagenesCargadas = 0;
+
+        // Cargar las 12 imágenes PNG de la carpeta del modelo seleccionado
+        for (let i = 1; i <= totalFrames; i++) {
+            const img = new Image();
+            img.src = `imagenes/${carpetaModelo}/${i}.png`;
+            img.onload = () => {
+                imagenesCargadas++;
+                if (imagenesCargadas === totalFrames) {
+                    dibujarImagen(indiceActual);
+                }
+            };
+            img.onerror = () => {
+                imagenesCargadas++;
+                if (imagenesCargadas === totalFrames) {
+                    dibujarImagen(indiceActual);
+                }
+            };
+            imagenes.push(img);
+        }
+
+        function dibujarImagen(indice) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpia manteniendo la transparencia
+            if (imagenes[indice] && imagenes[indice].complete && imagenes[indice].naturalWidth > 0) {
+                ctx.drawImage(imagenes[indice], 0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // Permite cambiar de modelo en vivo desde la página padre si se envía un mensaje
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.tipo === 'cambiarModelo') {
+                const nuevoModelo = parseInt(event.data.modelo, 10);
+                if (nuevoModelo >= 1 && nuevoModelo <= 5) {
+                    window.location.search = `?modelo=${nuevoModelo}`;
+                }
+            }
+        });
+
+        let arrastrando = false;
+        let xInicial = 0;
+
+        // Eventos para el Mouse (PC)
+        canvas.addEventListener('mousedown', (e) => {
+            arrastrando = true;
+            xInicial = e.clientX;
+        });
+
+        window.addEventListener('mouseup', () => {
+            arrastrando = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!arrastrando) return;
+            let deltaX = e.clientX - xInicial;
+
+            if (Math.abs(deltaX) > 12) { // Sensibilidad de giro
+                if (deltaX > 0) {
+                    indiceActual = (indiceActual + 1) % totalFrames;
+                } else {
+                    indiceActual = (indiceActual - 1 + totalFrames) % totalFrames;
+                }
+                xInicial = e.clientX;
+                dibujarImagen(indiceActual);
+            }
+        });
+
+        // Eventos táctiles (Celulares y Tablets)
+        canvas.addEventListener('touchstart', (e) => {
+            arrastrando = true;
+            xInicial = e.touches[0].clientX;
+        });
+
+        window.addEventListener('touchend', () => {
+            arrastrando = false;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (!arrastrando) return;
+            let deltaX = e.touches[0].clientX - xInicial;
+
+            if (Math.abs(deltaX) > 12) {
+                if (deltaX > 0) {
+                    indiceActual = (indiceActual + 1) % totalFrames;
+                } else {
+                    indiceActual = (indiceActual - 1 + totalFrames) % totalFrames;
+                }
+                xInicial = e.touches[0].clientX;
+                dibujarImagen(indiceActual);
+            }
+        });
+    </script>
+</body>
+</html>
